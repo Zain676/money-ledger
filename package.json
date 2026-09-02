@@ -4,7 +4,8 @@
   "description": "Personal Multi-Account Finance & Money Ownership Ledger with MongoDB Atlas Cloud Sync",
   "main": "index.html",
   "scripts": {
-    "dev": "npx netlify dev",
+    "start": "node server.js",
+    "dev": "node server.js",
     "build": "echo 'Frontend ready for static deployment'"
   },
   "keywords": [

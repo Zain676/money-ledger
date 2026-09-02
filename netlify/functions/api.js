@@ -4,6 +4,14 @@
  */
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const dns = require('dns');
+
+// Configure reliable DNS servers for SRV resolution (8.8.8.8 & 1.1.1.1)
+try {
+    dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+} catch (e) {
+    // DNS setting fallback
+}
 
 // Try loading local .env if available
 try {
