@@ -1,0 +1,25 @@
+{
+  "name": "money-ledger",
+  "version": "2.0.0",
+  "description": "Personal Multi-Account Finance & Money Ownership Ledger with MongoDB Atlas Cloud Sync",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx netlify dev",
+    "build": "echo 'Frontend ready for static deployment'"
+  },
+  "keywords": [
+    "personal-finance",
+    "money-ledger",
+    "expense-tracker",
+    "mongodb-atlas",
+    "netlify-functions"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "mongodb": "^6.8.0"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5"
+  }
+}

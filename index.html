@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Money Ledger — Personal Financial Control & Ownership</title>
+    <meta name="description" content="Personal multi-account finance tracker and multi-person money ownership ledger.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- App Layout -->
+    <div class="app-layout">
+
+        <!-- Mobile Topbar -->
+        <header class="mobile-header">
+            <button id="mobile-menu-btn" class="icon-btn" aria-label="Open Navigation Menu" onclick="toggleSidebar()">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <div class="mobile-brand">
+                <div class="brand-badge"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                    </svg></div>
+                <span>Money Ledger</span>
+                <span id="mobile-sync-dot" class="sync-dot-badge local" title="Sync Status"></span>
+            </div>
+            <button class="theme-toggle-btn icon-btn" onclick="toggleTheme()" aria-label="Toggle Theme">
+                <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Sidebar Overlay (Mobile) -->
+        <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="closeSidebar()"></div>
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <div class="brand-badge">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                    </div>
+                    <div class="brand-text">
+                        <h2>Money Ledger</h2>
+                        <span class="brand-subtitle">Financial Control</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Navigation Links -->
+            <nav class="nav-menu">
+                <a href="#overview" class="nav-item active" data-view="overview" onclick="switchView('overview')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Overview</span>
+                </a>
+                <a href="#transactions" class="nav-item" data-view="transactions" onclick="switchView('transactions')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                    </svg>
+                    <span>Transactions</span>
+                    <span id="nav-tx-count" class="badge-pill">0</span>
+                </a>
+                <a href="#accounts" class="nav-item" data-view="accounts" onclick="switchView('accounts')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                        <line x1="2" y1="10" x2="22" y2="10"></line>
+                    </svg>
+                    <span>Accounts</span>
+                    <span id="nav-acc-count" class="badge-pill">0</span>
+                </a>
+                <a href="#people" class="nav-item" data-view="people" onclick="switchView('people')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>People & Debts</span>
+                    <span id="nav-people-count" class="badge-pill">0</span>
+                </a>
+                <a href="#analytics" class="nav-item" data-view="analytics" onclick="switchView('analytics')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>Analytics</span>
+                </a>
+                <a href="#settings" class="nav-item" data-view="settings" onclick="switchView('settings')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        </path>
+                    </svg>
+                    <span>Settings & Backup</span>
+                </a>
+            </nav>
+
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <div class="sidebar-balance-widget">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="widget-label">Total Balance</span>
+                        <div id="sidebar-sync-badge" class="cloud-sync-chip" title="Click to check cloud sync" onclick="triggerManualCloudSync()">
+                            <span class="sync-dot local"></span>
+                            <span id="sync-status-text">Local</span>
+                        </div>
+                    </div>
+                    <span id="sidebar-total-balance" class="widget-val">Rs. 0</span>
+                </div>
+                <div class="theme-switch-row">
+                    <span class="theme-text">Theme</span>
+                    <button class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Light/Dark Mode">
+                        <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- ================= VIEW 1: OVERVIEW ================= -->
+            <div id="view-overview" class="view-panel active">
+                <!-- Hero Header -->
+                <header class="dashboard-hero card">
+                    <div class="hero-content">
+                        <div class="hero-metrics">
+                            <span class="label-caps">Total Liquid Balance</span>
+                            <h1 id="total-balance-display" class="hero-balance">Rs. 0</h1>
+                            <div class="hero-substats">
+                                <span id="sub-stats" class="text-secondary font-medium">0 accounts · 0 people</span>
+                                <span class="dot-separator">•</span>
+                                <span id="monthly-net-stat" class="trend-badge positive">+Rs. 0 this month</span>
+                            </div>
+                        </div>
+                        <div class="header-actions">
+                            <button class="btn btn-secondary" onclick="openTransactionModal('out')">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                <span>Money Out</span>
+                            </button>
+                            <button class="btn btn-primary" onclick="openTransactionModal('in')">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                <span>Money In</span>
+                            </button>
+                            <button class="btn btn-outline" onclick="openTransactionModal('transfer_account')"
+                                title="Transfer between bank accounts">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polyline points="17 1 21 5 17 9"></polyline>
+                                    <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                                    <polyline points="7 23 3 19 7 15"></polyline>
+                                    <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                                </svg>
+                                <span>Transfer</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Financial Stats Grid -->
+                    <div class="stats-ribbon">
+                        <div class="stat-box">
+                            <span class="stat-title">Income (This Month)</span>
+                            <span id="stat-monthly-income" class="stat-value text-success">+Rs. 0</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-title">Expenses (This Month)</span>
+                            <span id="stat-monthly-expense" class="stat-value text-danger">-Rs. 0</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-title">Net Savings</span>
+                            <span id="stat-monthly-savings" class="stat-value">Rs. 0</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-title">Total Transactions</span>
+                            <span id="stat-total-tx" class="stat-value">0</span>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Ownership Section -->
+                <section class="card ownership-section section-spacer">
+                    <div class="section-header-flex">
+                        <div>
+                            <span class="label-caps">Money Ownership Pool</span>
+                            <h3 class="section-title">Who owns what proportion</h3>
+                        </div>
+                        <button class="btn btn-sm btn-ghost" onclick="openSettleModal()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <polyline points="16 11 18 13 22 9"></polyline>
+                            </svg>
+                            <span>Settle / Reallocate</span>
+                        </button>
+                    </div>
+                    <div id="ownership-bar" class="progress-bar">
+                        <!-- Segments injected via JS -->
+                    </div>
+                    <div id="people-legend" class="legend-grid">
+                        <!-- People summary cards injected via JS -->
+                    </div>
+                </section>
+
+                <!-- Accounts Grid -->
+                <section class="section-spacer">
+                    <div class="section-header-flex">
+                        <div>
+                            <span class="label-caps">Accounts & Wallets</span>
+                            <h3 class="section-title">Where the funds are held</h3>
+                        </div>
+                        <button class="btn btn-sm btn-outline" onclick="openAccountModal()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>Add Account</span>
+                        </button>
+                    </div>
+                    <div id="accounts-grid" class="accounts-grid">
+                        <!-- Account cards injected via JS -->
+                    </div>
+                </section>
+
+                <!-- Quick Analytics & Recent Activity Split Grid -->
+                <div class="dashboard-split section-spacer">
+                    <!-- Recent Activity -->
+                    <section class="card flex-1">
+                        <div class="section-header-flex">
+                            <div>
+                                <span class="label-caps">Recent Activity</span>
+                                <h3 class="section-title">Latest Transactions</h3>
+                            </div>
+                            <button class="btn btn-sm btn-ghost" onclick="switchView('transactions')">View All
+                                &rarr;</button>
+                        </div>
+                        <div id="transaction-list" class="transaction-list">
+                            <!-- Transactions will be injected here -->
+                        </div>
+                    </section>
+
+                    <!-- Mini Spending by Category -->
+                    <section class="card dashboard-chart-card">
+                        <div class="section-header-flex">
+                            <div>
+                                <span class="label-caps">Monthly Breakdown</span>
+                                <h3 class="section-title">Top Expense Categories</h3>
+                            </div>
+                        </div>
+                        <div id="mini-category-breakdown" class="mini-chart-container">
+                            <!-- Injected breakdown -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 2: TRANSACTIONS LEDGER ================= -->
+            <div id="view-transactions" class="view-panel">
+                <header class="view-header">
+                    <div>
+                        <span class="label-caps">Financial Journal</span>
+                        <h1 class="view-title">Transactions Ledger</h1>
+                        <p class="text-secondary">Comprehensive record of all incoming, outgoing, and transfer
+                            operations.</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-outline" onclick="exportTransactionsCSV()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <span>Export CSV</span>
+                        </button>
+                        <button class="btn btn-primary" onclick="openTransactionModal('in')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>Add Transaction</span>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Filter and Search Bar -->
+                <div class="card filter-card">
+                    <div class="filter-row-primary">
+                        <div class="search-input-wrapper">
+                            <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <input type="text" id="tx-search-input"
+                                placeholder="Search by note, person, account, category..."
+                                oninput="handleTxFilterChange()">
+                            <button id="tx-search-clear" class="search-clear-btn" onclick="clearTxSearch()"
+                                style="display:none;">&times;</button>
+                        </div>
+                        <div class="filter-selects">
+                            <select id="tx-filter-type" onchange="handleTxFilterChange()">
+                                <option value="all">All Types</option>
+                                <option value="in">Money In (Income)</option>
+                                <option value="out">Money Out (Expense)</option>
+                                <option value="transfer_account">Account Transfer</option>
+                                <option value="transfer_person">Ownership Transfer</option>
+                            </select>
+                            <select id="tx-filter-account" onchange="handleTxFilterChange()">
+                                <option value="all">All Accounts</option>
+                            </select>
+                            <select id="tx-filter-person" onchange="handleTxFilterChange()">
+                                <option value="all">All People</option>
+                            </select>
+                            <select id="tx-filter-category" onchange="handleTxFilterChange()">
+                                <option value="all">All Categories</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="filter-row-secondary">
+                        <div class="date-preset-pills">
+                            <button class="pill-btn active" data-range="all" onclick="setDateRangePreset('all')">All
+                                Time</button>
+                            <button class="pill-btn" data-range="this_month"
+                                onclick="setDateRangePreset('this_month')">This Month</button>
+                            <button class="pill-btn" data-range="last_month"
+                                onclick="setDateRangePreset('last_month')">Last Month</button>
+                            <button class="pill-btn" data-range="last_30" onclick="setDateRangePreset('last_30')">Last
+                                30 Days</button>
+                            <button class="pill-btn" data-range="custom" onclick="setDateRangePreset('custom')">Custom
+                                Range</button>
+                        </div>
+                        <div id="custom-date-inputs" class="custom-date-range" style="display:none;">
+                            <input type="date" id="tx-filter-date-start" onchange="handleTxFilterChange()">
+                            <span>to</span>
+                            <input type="date" id="tx-filter-date-end" onchange="handleTxFilterChange()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Results Summary Banner -->
+                <div class="filter-summary-bar">
+                    <div class="summary-item">
+                        <span>Showing:</span>
+                        <strong id="filtered-count-badge">0 transactions</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Filtered Inflow:</span>
+                        <strong id="filtered-inflow" class="text-success">+Rs. 0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Filtered Outflow:</span>
+                        <strong id="filtered-outflow" class="text-danger">-Rs. 0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Net Flow:</span>
+                        <strong id="filtered-net">Rs. 0</strong>
+                    </div>
+                </div>
+
+                <!-- Transactions Table Card -->
+                <div class="card table-card">
+                    <div class="table-responsive">
+                        <table class="ledger-table">
+                            <thead>
+                                <tr>
+                                    <th onclick="toggleSort('date')" class="sortable">Date <span
+                                            id="sort-date-icon">↕</span></th>
+                                    <th>Type</th>
+                                    <th>Description & Notes</th>
+                                    <th>Category</th>
+                                    <th>Person / Owner</th>
+                                    <th>Account / Wallet</th>
+                                    <th onclick="toggleSort('amount')" class="sortable text-right">Amount <span
+                                            id="sort-amount-icon">↕</span></th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="full-transaction-tbody">
+                                <!-- Transaction rows injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="tx-pagination-bar" class="pagination-bar">
+                        <!-- Pagination controls -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 3: ACCOUNTS ================= -->
+            <div id="view-accounts" class="view-panel">
+                <header class="view-header">
+                    <div>
+                        <span class="label-caps">Asset Locations</span>
+                        <h1 class="view-title">Accounts & Wallets</h1>
+                        <p class="text-secondary">Manage bank accounts, cash reserves, mobile wallets, and cards.</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-outline" onclick="openTransactionModal('transfer_account')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="17 1 21 5 17 9"></polyline>
+                                <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                                <polyline points="7 23 3 19 7 15"></polyline>
+                                <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                            </svg>
+                            <span>Transfer Funds</span>
+                        </button>
+                        <button class="btn btn-primary" onclick="openAccountModal()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>Add Account</span>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="accounts-summary-row">
+                    <div class="stat-card">
+                        <span class="stat-label">Total in Accounts</span>
+                        <h2 id="acc-view-total" class="stat-number">Rs. 0</h2>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Active Accounts</span>
+                        <h2 id="acc-view-count" class="stat-number">0</h2>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Primary Asset</span>
+                        <h2 id="acc-view-primary" class="stat-number font-medium">None</h2>
+                    </div>
+                </div>
+
+                <div id="accounts-management-grid" class="accounts-grid section-spacer">
+                    <!-- Detailed account cards injected via JS -->
+                </div>
+            </div>
+
+            <!-- ================= VIEW 4: PEOPLE & OWNERSHIP ================= -->
+            <div id="view-people" class="view-panel">
+                <header class="view-header">
+                    <div>
+                        <span class="label-caps">Ownership & Splits</span>
+                        <h1 class="view-title">People & Shared Ledgers</h1>
+                        <p class="text-secondary">Track how much of the pooled balance belongs to each individual or
+                            debt split.</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-outline" onclick="openSettleModal()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <polyline points="16 11 18 13 22 9"></polyline>
+                            </svg>
+                            <span>Settle / Transfer</span>
+                        </button>
+                        <button class="btn btn-primary" onclick="openPersonModal()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <line x1="20" y1="8" x2="20" y2="14"></line>
+                                <line x1="23" y1="11" x2="17" y2="11"></line>
+                            </svg>
+                            <span>Add Person</span>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="card section-spacer">
+                    <span class="label-caps">Total Pool Ownership Distribution</span>
+                    <div id="people-view-bar" class="progress-bar"></div>
+                </div>
+
+                <div id="people-management-grid" class="people-grid section-spacer">
+                    <!-- People cards injected via JS -->
+                </div>
+            </div>
+
+            <!-- ================= VIEW 5: ANALYTICS & REPORTS ================= -->
+            <div id="view-analytics" class="view-panel">
+                <header class="view-header">
+                    <div>
+                        <span class="label-caps">Insights & Trends</span>
+                        <h1 class="view-title">Financial Analytics</h1>
+                        <p class="text-secondary">Visual breakdowns of cash flow, category expenses, and balance
+                            movements.</p>
+                    </div>
+                    <div class="header-actions">
+                        <select id="analytics-timeframe" onchange="renderAnalytics()" class="form-control"
+                            style="width:auto;">
+                            <option value="this_month">This Month</option>
+                            <option value="last_month">Last Month</option>
+                            <option value="last_3_months">Last 3 Months</option>
+                            <option value="all_time">All Time</option>
+                        </select>
+                    </div>
+                </header>
+
+                <div class="analytics-grid">
+                    <!-- Income vs Expense Flow Chart Card -->
+                    <div class="card analytics-card">
+                        <div class="card-header">
+                            <div>
+                                <span class="label-caps">Cash Flow Analysis</span>
+                                <h3 class="section-title">Income vs Expenses</h3>
+                            </div>
+                            <div id="analytics-flow-summary" class="badge-tag"></div>
+                        </div>
+                        <div id="analytics-flow-chart" class="chart-box">
+                            <!-- SVG Bar Chart injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Category Expense Distribution Donut -->
+                    <div class="card analytics-card">
+                        <div class="card-header">
+                            <div>
+                                <span class="label-caps">Spending Breakdown</span>
+                                <h3 class="section-title">Expenses by Category</h3>
+                            </div>
+                        </div>
+                        <div class="donut-with-legend">
+                            <div id="analytics-category-donut" class="donut-chart-box">
+                                <!-- SVG Donut injected via JS -->
+                            </div>
+                            <div id="analytics-category-legend" class="chart-legend-list">
+                                <!-- Legend list injected via JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Holding Distribution -->
+                    <div class="card analytics-card">
+                        <div class="card-header">
+                            <div>
+                                <span class="label-caps">Asset Distribution</span>
+                                <h3 class="section-title">Holdings by Account</h3>
+                            </div>
+                        </div>
+                        <div id="analytics-account-bars" class="distribution-bars">
+                            <!-- Progress breakdown injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Top Single Expenses -->
+                    <div class="card analytics-card">
+                        <div class="card-header">
+                            <div>
+                                <span class="label-caps">Major Outflows</span>
+                                <h3 class="section-title">Largest Expenses in Period</h3>
+                            </div>
+                        </div>
+                        <div id="analytics-top-expenses" class="top-expenses-list">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 6: SETTINGS & BACKUP ================= -->
+            <div id="view-settings" class="view-panel">
+                <header class="view-header">
+                    <div>
+                        <span class="label-caps">Preferences & Data</span>
+                        <h1 class="view-title">Settings & Backup</h1>
+                        <p class="text-secondary">Configure currency, manage backups, export reports, or restore your
+                            ledger.</p>
+                    </div>
+                </header>
+
+                <div class="settings-sections-grid">
+                    <!-- MongoDB Atlas Cloud Sync -->
+                    <div class="card">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                            <div>
+                                <h3 class="section-title">MongoDB Atlas Cloud Sync</h3>
+                                <p class="text-secondary text-sm">Synchronize your accounts, people, and transactions across your PC, Mac, and phone.</p>
+                            </div>
+                            <span id="settings-db-badge" class="badge-tag in">Checking DB...</span>
+                        </div>
+
+                        <div class="actions-stack">
+                            <div class="action-card-item">
+                                <div>
+                                    <div class="font-bold">Cloud Connection Status</div>
+                                    <div id="settings-db-detail" class="text-secondary text-sm">Testing connection to Netlify API...</div>
+                                    <div id="settings-db-synced-at" class="text-muted text-sm mt-1">Last synced: Never</div>
+                                </div>
+                                <div style="display:flex; gap:8px;">
+                                    <button class="btn btn-primary" onclick="triggerManualCloudSync()">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                                        <span>Sync to Cloud</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- General Preferences -->
+                    <div class="card">
+                        <h3 class="section-title">App Preferences</h3>
+                        <p class="text-secondary mb-4">Customize your visual and regional preferences.</p>
+
+                        <div class="form-stack">
+                            <div class="input-group">
+                                <label for="setting-currency">Currency Symbol</label>
+                                <select id="setting-currency" onchange="updateSettings()">
+                                    <option value="Rs. ">Pakistani Rupee (Rs.)</option>
+                                    <option value="$ ">US Dollar ($)</option>
+                                    <option value="€ ">Euro (€)</option>
+                                    <option value="£ ">British Pound (£)</option>
+                                    <option value="₹ ">Indian Rupee (₹)</option>
+                                    <option value="AED ">UAE Dirham (AED)</option>
+                                    <option value="SAR ">Saudi Riyal (SAR)</option>
+                                    <option value="C$ ">Canadian Dollar (C$)</option>
+                                    <option value="A$ ">Australian Dollar (A$)</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="setting-theme">Theme Appearance</label>
+                                <select id="setting-theme" onchange="handleThemeSettingChange()">
+                                    <option value="light">Light Mode</option>
+                                    <option value="dark">Dark Mode</option>
+                                    <option value="system">System Default</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Backup & Export -->
+                    <div class="card">
+                        <h3 class="section-title">Data Backup & Safety</h3>
+                        <p class="text-secondary mb-4">Never lose your financial data. Save backups locally anytime.</p>
+
+                        <div class="actions-stack">
+                            <div class="action-card-item">
+                                <div>
+                                    <div class="font-bold">Export JSON Backup</div>
+                                    <div class="text-secondary text-sm">Download full database snapshot (accounts,
+                                        people, transactions, settings).</div>
+                                </div>
+                                <button class="btn btn-outline" onclick="exportDataBackup()">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    <span>Download Backup</span>
+                                </button>
+                            </div>
+
+                            <div class="action-card-item">
+                                <div>
+                                    <div class="font-bold">Export All to CSV</div>
+                                    <div class="text-secondary text-sm">Download your transaction history spreadsheet
+                                        for Excel or Google Sheets.</div>
+                                </div>
+                                <button class="btn btn-outline" onclick="exportTransactionsCSV()">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        <polyline points="10 9 9 9 8 9"></polyline>
+                                    </svg>
+                                    <span>Export CSV</span>
+                                </button>
+                            </div>
+
+                            <div class="action-card-item">
+                                <div>
+                                    <div class="font-bold">Restore from Backup</div>
+                                    <div class="text-secondary text-sm">Upload a previously exported JSON backup file.
+                                    </div>
+                                </div>
+                                <div>
+                                    <input type="file" id="import-json-file" accept=".json" style="display:none;"
+                                        onchange="handleImportBackup(event)">
+                                    <button class="btn btn-secondary"
+                                        onclick="document.getElementById('import-json-file').click()">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="17 8 12 3 7 8"></polyline>
+                                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                                        </svg>
+                                        <span>Import File</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Database Management & Demos -->
+                    <div class="card danger-zone-card">
+                        <h3 class="section-title text-danger">Database Utilities</h3>
+                        <p class="text-secondary mb-4">Perform diagnostic balance recalculations or reset data.</p>
+
+                        <div class="actions-stack">
+                            <div class="action-card-item">
+                                <div>
+                                    <div class="font-bold">Recalculate & Audit Balances</div>
+                                    <div class="text-secondary text-sm">Reconcile all account and ownership balances
+                                        against complete transaction ledger.</div>
+                                </div>
+                                <button class="btn btn-outline" onclick="auditAndRecalculateBalances()">
+                                    <span>Audit Balances</span>
+                                </button>
+                            </div>
+
+                            <div class="action-card-item">
+                                <div>
+                                    <div class="font-bold">Load Sample Demo Data</div>
+                                    <div class="text-secondary text-sm">Populate the app with realistic accounts,
+                                        people, and transactions for testing.</div>
+                                </div>
+                                <button class="btn btn-ghost" onclick="loadSampleData()">
+                                    <span>Load Sample Data</span>
+                                </button>
+                            </div>
+
+                            <div class="action-card-item">
+                                <div>
+                                    <div class="font-bold text-danger">Reset All Data</div>
+                                    <div class="text-secondary text-sm">Permanently wipe all transactions, accounts, and
+                                        people from your browser.</div>
+                                </div>
+                                <button class="btn btn-danger" onclick="confirmResetAllData()">
+                                    <span>Reset Everything</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Quick Bar -->
+    <nav class="mobile-bottom-nav">
+        <a href="#overview" class="bottom-nav-link active" data-view="overview" onclick="switchView('overview')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Overview</span>
+        </a>
+        <a href="#transactions" class="bottom-nav-link" data-view="transactions" onclick="switchView('transactions')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+            </svg>
+            <span>Journal</span>
+        </a>
+        <button class="fab-add-btn" onclick="openTransactionModal('in')" aria-label="Add Transaction">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
+        <a href="#accounts" class="bottom-nav-link" data-view="accounts" onclick="switchView('accounts')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+            <span>Accounts</span>
+        </a>
+        <a href="#people" class="bottom-nav-link" data-view="people" onclick="switchView('people')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+            </svg>
+            <span>People</span>
+        </a>
+    </nav>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- 1. Unified Transaction Modal (In / Out / Account Transfer / Person Transfer) -->
+    <div id="transaction-modal" class="modal-overlay" onclick="handleModalBackdropClick(event, 'transaction-modal')">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <h2 id="tx-modal-title">Record Transaction</h2>
+                <button class="modal-close-btn" onclick="closeModal('transaction-modal')">&times;</button>
+            </div>
+
+            <!-- Transaction Type Switcher Tabs -->
+            <div class="tab-pill-container">
+                <button type="button" class="tab-pill active" id="tab-tx-in" onclick="setTxModalType('in')">+ Money
+                    In</button>
+                <button type="button" class="tab-pill" id="tab-tx-out" onclick="setTxModalType('out')">- Money
+                    Out</button>
+                <button type="button" class="tab-pill" id="tab-tx-transfer"
+                    onclick="setTxModalType('transfer_account')">⇄ Bank Transfer</button>
+                <button type="button" class="tab-pill" id="tab-tx-settle" onclick="setTxModalType('transfer_person')">🤝
+                    Ownership Transfer</button>
+            </div>
+
+            <form id="transaction-form" class="form-stack">
+                <input type="hidden" id="tx-edit-id" value="">
+                <input type="hidden" id="trans-type" value="in">
+
+                <!-- Amount & Date Row -->
+                <div class="form-row">
+                    <div class="input-group flex-1">
+                        <label for="amount">Amount (<span id="modal-currency-label">Rs.</span>) <span
+                                class="required">*</span></label>
+                        <input type="number" id="amount" step="any" min="0.01" required placeholder="0.00"
+                            class="input-lg font-mono">
+                    </div>
+                    <div class="input-group">
+                        <label for="tx-date">Date <span class="required">*</span></label>
+                        <input type="date" id="tx-date" required>
+                    </div>
+                </div>
+
+                <!-- Contextual Form Fields based on Type -->
+
+                <!-- For 'in' and 'out' -->
+                <div id="fields-standard" class="form-row">
+                    <div class="input-group flex-1">
+                        <label for="person-select">Person / Owner <span class="required">*</span></label>
+                        <select id="person-select" required></select>
+                    </div>
+                    <div class="input-group flex-1">
+                        <label for="account-select">Account / Wallet <span class="required">*</span></label>
+                        <select id="account-select" required></select>
+                    </div>
+                </div>
+
+                <!-- For 'transfer_account' (Bank to Cash / Bank to Bank) -->
+                <div id="fields-account-transfer" class="form-row" style="display:none;">
+                    <div class="input-group flex-1">
+                        <label for="transfer-from-account">From Account <span class="required">*</span></label>
+                        <select id="transfer-from-account"></select>
+                    </div>
+                    <div class="input-group flex-1">
+                        <label for="transfer-to-account">To Account <span class="required">*</span></label>
+                        <select id="transfer-to-account"></select>
+                    </div>
+                </div>
+
+                <!-- For 'transfer_person' (Settle Debt / Reallocate Ownership) -->
+                <div id="fields-person-transfer" class="form-row" style="display:none;">
+                    <div class="input-group flex-1">
+                        <label for="transfer-from-person">From Person <span class="required">*</span></label>
+                        <select id="transfer-from-person"></select>
+                    </div>
+                    <div class="input-group flex-1">
+                        <label for="transfer-to-person">To Person <span class="required">*</span></label>
+                        <select id="transfer-to-person"></select>
+                    </div>
+                </div>
+
+                <!-- Category & Description -->
+                <div class="form-row">
+                    <div class="input-group flex-1" id="category-group">
+                        <label for="category-select">Category</label>
+                        <select id="category-select"></select>
+                    </div>
+                    <div class="input-group flex-2">
+                        <label for="description">Description / Item <span class="required">*</span></label>
+                        <input type="text" id="description" placeholder="e.g. Monthly Salary, Grocery Bill, ATM Cash..."
+                            required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="tx-notes">Additional Notes (Optional)</label>
+                    <input type="text" id="tx-notes" placeholder="e.g. Receipt #123, split between friends...">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost"
+                        onclick="closeModal('transaction-modal')">Cancel</button>
+                    <button type="submit" id="tx-submit-btn" class="btn btn-primary">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. Account Modal (Add / Edit Account) -->
+    <div id="account-modal" class="modal-overlay" onclick="handleModalBackdropClick(event, 'account-modal')">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="acc-modal-title">Add Account</h2>
+                <button class="modal-close-btn" onclick="closeModal('account-modal')">&times;</button>
+            </div>
+            <form id="account-form" class="form-stack">
+                <input type="hidden" id="acc-edit-id" value="">
+
+                <div class="input-group">
+                    <label for="acc-name">Account Name <span class="required">*</span></label>
+                    <input type="text" id="acc-name" placeholder="e.g. UBL Bank, Cash, Nayapay, SadaPay, HBL..."
+                        required>
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group flex-1">
+                        <label for="acc-type">Account Type</label>
+                        <select id="acc-type">
+                            <option value="Bank">Bank Account</option>
+                            <option value="Physical">Physical Cash</option>
+                            <option value="Mobile">Mobile Wallet (JazzCash, Nayapay, etc.)</option>
+                            <option value="Savings">Savings Account</option>
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="Investment">Investment / Stocks</option>
+                        </select>
+                    </div>
+                    <div class="input-group flex-1" id="acc-initial-group">
+                        <label for="acc-balance">Starting Balance</label>
+                        <input type="number" id="acc-balance" step="any" placeholder="0.00" value="0">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="acc-color">Account Color Accent</label>
+                    <div class="color-picker-row">
+                        <input type="color" id="acc-color" value="#2563eb" class="color-picker-input">
+                        <div class="color-presets">
+                            <span class="color-dot" style="background:#2563eb;" onclick="setAccColor('#2563eb')"></span>
+                            <span class="color-dot" style="background:#0f172a;" onclick="setAccColor('#0f172a')"></span>
+                            <span class="color-dot" style="background:#10b981;" onclick="setAccColor('#10b981')"></span>
+                            <span class="color-dot" style="background:#8b5cf6;" onclick="setAccColor('#8b5cf6')"></span>
+                            <span class="color-dot" style="background:#f59e0b;" onclick="setAccColor('#f59e0b')"></span>
+                            <span class="color-dot" style="background:#ef4444;" onclick="setAccColor('#ef4444')"></span>
+                            <span class="color-dot" style="background:#06b6d4;" onclick="setAccColor('#06b6d4')"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="acc-notes">Account Notes / Number (Optional)</label>
+                    <input type="text" id="acc-notes" placeholder="e.g. IBAN or purpose...">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost" onclick="closeModal('account-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. Person Modal (Add / Edit Person) -->
+    <div id="person-modal" class="modal-overlay" onclick="handleModalBackdropClick(event, 'person-modal')">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="person-modal-title">Add Person</h2>
+                <button class="modal-close-btn" onclick="closeModal('person-modal')">&times;</button>
+            </div>
+            <form id="person-form" class="form-stack">
+                <input type="hidden" id="person-edit-id" value="">
+
+                <div class="input-group">
+                    <label for="person-name">Person Name <span class="required">*</span></label>
+                    <input type="text" id="person-name" placeholder="e.g. Zain, Sister, Brother, Mom..." required>
+                </div>
+
+                <div class="input-group" id="person-initial-group">
+                    <label for="person-balance">Initial Owned Balance</label>
+                    <input type="number" id="person-balance" step="any" placeholder="0.00" value="0">
+                </div>
+
+                <div class="input-group">
+                    <label for="person-color">Theme Color</label>
+                    <div class="color-picker-row">
+                        <input type="color" id="person-color" value="#0f172a" class="color-picker-input">
+                        <div class="color-presets">
+                            <span class="color-dot" style="background:#0f172a;"
+                                onclick="setPersonColor('#0f172a')"></span>
+                            <span class="color-dot" style="background:#3b82f6;"
+                                onclick="setPersonColor('#3b82f6')"></span>
+                            <span class="color-dot" style="background:#8b5cf6;"
+                                onclick="setPersonColor('#8b5cf6')"></span>
+                            <span class="color-dot" style="background:#ec4899;"
+                                onclick="setPersonColor('#ec4899')"></span>
+                            <span class="color-dot" style="background:#10b981;"
+                                onclick="setPersonColor('#10b981')"></span>
+                            <span class="color-dot" style="background:#f97316;"
+                                onclick="setPersonColor('#f97316')"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="person-notes">Notes / Relationship (Optional)</label>
+                    <input type="text" id="person-notes" placeholder="e.g. Primary user, Family member...">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost" onclick="closeModal('person-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Person</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. Quick Settle / Debt Wizard Modal -->
+    <div id="settle-modal" class="modal-overlay" onclick="handleModalBackdropClick(event, 'settle-modal')">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Ownership Settle & Transfer</h2>
+                <button class="modal-close-btn" onclick="closeModal('settle-modal')">&times;</button>
+            </div>
+            <p class="text-secondary text-sm mb-4">Reallocate money ownership between two people (e.g., settling a
+                shared bill or paying back money).</p>
+
+            <form id="settle-form" class="form-stack">
+                <div class="input-group">
+                    <label for="settle-amount">Amount (<span class="curr-symbol-span">Rs.</span>) <span
+                            class="required">*</span></label>
+                    <input type="number" id="settle-amount" step="any" min="0.01" required placeholder="0.00"
+                        class="input-lg font-mono">
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group flex-1">
+                        <label for="settle-from-person">From (Payer / Decreasing)</label>
+                        <select id="settle-from-person" required></select>
+                    </div>
+                    <div class="input-group flex-1">
+                        <label for="settle-to-person">To (Receiver / Increasing)</label>
+                        <select id="settle-to-person" required></select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="settle-desc">Reason / Note</label>
+                    <input type="text" id="settle-desc" placeholder="e.g. Dinner split settlement, Loan repayment..."
+                        required>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost" onclick="closeModal('settle-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Execute Settlement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. Confirmation Dialog Modal -->
+    <div id="confirm-modal" class="modal-overlay" onclick="handleModalBackdropClick(event, 'confirm-modal')">
+        <div class="modal-card modal-sm text-center">
+            <div class="confirm-icon-box">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                    </path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <h3 id="confirm-title" class="mb-2">Are you sure?</h3>
+            <p id="confirm-message" class="text-secondary text-sm mb-4">This action cannot be undone.</p>
+            <div class="modal-actions justify-center">
+                <button type="button" class="btn btn-ghost" onclick="closeConfirmModal(false)">Cancel</button>
+                <button type="button" id="confirm-ok-btn" class="btn btn-danger"
+                    onclick="closeConfirmModal(true)">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
