@@ -2116,6 +2116,10 @@ a {
     justify-content: center !important;
 }
 
+.justify-between {
+    justify-content: space-between !important;
+}
+
 .confirm-icon-box {
     width: 60px;
     height: 60px;
@@ -2533,11 +2537,47 @@ a {
    ========================================================================== */
 
 .activity-modal-card {
-    max-width: 780px !important;
-    width: 95%;
-    max-height: 90vh;
+    max-width: 920px !important;
+    width: 96vw;
+    max-height: 92vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    padding: 0 !important;
+}
+
+/* Activity modal inner sections with consistent padding */
+.activity-modal-card .modal-header {
+    padding: 22px 28px 18px 28px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+
+.activity-modal-card .activity-stats-grid {
+    padding: 20px 28px 0 28px;
+    flex-shrink: 0;
+}
+
+.activity-modal-card .activity-modal-toolbar {
+    padding: 12px 28px;
+    margin: 0;
+}
+
+.activity-modal-card .activity-table-wrapper {
+    margin: 0 28px 0 28px;
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+}
+
+.activity-modal-card .modal-actions {
+    padding: 14px 28px;
+    margin: 0;
+    flex-shrink: 0;
+    background: var(--bg-surface-subtle);
+    border-top: 1px solid var(--border-color);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
 
 .activity-modal-profile {
@@ -2555,7 +2595,7 @@ a {
 
 .badge-balance {
     display: inline-block;
-    padding: 3px 8px;
+    padding: 3px 10px;
     border-radius: var(--radius-full);
     font-size: 13px;
     font-weight: 700;
@@ -2567,7 +2607,8 @@ a {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 12px;
-    margin-bottom: 18px;
+    margin-bottom: 0;
+    padding-bottom: 4px;
 }
 
 @media (max-width: 640px) {
@@ -2577,33 +2618,38 @@ a {
 }
 
 .activity-stat-card {
-    padding: 12px 14px;
+    padding: 14px 16px;
     background: var(--bg-surface-subtle);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
+    transition: border-color 0.2s;
+}
+
+.activity-stat-card:hover {
+    border-color: var(--border-focus);
 }
 
 .activity-stat-card .label-caps {
     font-size: 10px;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     display: block;
 }
 
 .activity-stat-val {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 800;
+    letter-spacing: -0.3px;
 }
 
 .activity-modal-toolbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
-    margin-bottom: 12px;
-    border-top: 1px solid var(--border-subtle);
-    border-bottom: 1px solid var(--border-subtle);
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
     flex-wrap: wrap;
     gap: 10px;
+    background: var(--bg-surface-subtle);
 }
 
 .toolbar-left {
@@ -2613,13 +2659,18 @@ a {
     flex-wrap: wrap;
 }
 
+/* Activity table — horizontal scroll + fixed column widths */
 .activity-table-wrapper {
-    overflow-y: auto;
-    max-height: 320px;
+    overflow: auto;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    margin-bottom: 16px;
     background: var(--bg-surface);
+    margin-bottom: 0;
+}
+
+.activity-table-wrapper .ledger-table {
+    min-width: 680px; /* ensures table never collapses below this */
+    font-size: 13px;
 }
 
 .activity-table-wrapper .ledger-table th {
@@ -2627,4 +2678,78 @@ a {
     top: 0;
     z-index: 5;
     background: var(--bg-surface-subtle);
+    padding: 11px 14px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.activity-table-wrapper .ledger-table td {
+    padding: 11px 14px;
+    vertical-align: middle;
+}
+
+/* Pin key columns to avoid wrapping */
+.activity-table-wrapper .col-date {
+    white-space: nowrap;
+    width: 96px;
+    min-width: 96px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.activity-table-wrapper .col-type {
+    width: 110px;
+    min-width: 110px;
+    white-space: nowrap;
+}
+
+.activity-table-wrapper .col-desc {
+    min-width: 160px;
+}
+
+.activity-table-wrapper .col-desc .desc-title {
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1.3;
+    color: var(--text-primary);
+}
+
+.activity-table-wrapper .col-desc .desc-notes {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    line-height: 1.3;
+}
+
+.activity-table-wrapper .col-cat {
+    width: 120px;
+    min-width: 120px;
+    white-space: nowrap;
+}
+
+.activity-table-wrapper .col-acc {
+    width: 110px;
+    min-width: 110px;
+    white-space: nowrap;
+}
+
+.activity-table-wrapper .col-amount {
+    white-space: nowrap;
+    text-align: right;
+    width: 110px;
+    min-width: 100px;
+    font-size: 14px;
+}
+
+/* Zebra stripe for readability */
+.activity-table-wrapper .ledger-table tbody tr:nth-child(even) {
+    background: rgba(0,0,0,0.018);
+}
+
+[data-theme="dark"] .activity-table-wrapper .ledger-table tbody tr:nth-child(even) {
+    background: rgba(255,255,255,0.025);
+}
+
+.activity-table-wrapper .ledger-table tbody tr:last-child td {
+    border-bottom: none;
 }

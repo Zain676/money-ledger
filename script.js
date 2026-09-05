@@ -2127,15 +2127,15 @@ function openPersonActivityModal(personId) {
 
                 return `
                     <tr>
-                        <td class="font-mono text-sm">${t.date || '—'}</td>
-                        <td>${typeBadge}</td>
-                        <td>
-                            <div class="font-bold">${escapeHtml(t.desc)}</div>
-                            ${t.notes ? `<div class="text-muted text-xs">${escapeHtml(t.notes)}</div>` : ''}
+                        <td class="col-date font-mono">${t.date || '—'}</td>
+                        <td class="col-type">${typeBadge}</td>
+                        <td class="col-desc">
+                            <div class="desc-title">${escapeHtml(t.desc)}</div>
+                            ${t.notes ? `<div class="desc-notes">${escapeHtml(t.notes)}</div>` : ''}
                         </td>
-                        <td><span class="category-chip">${cat.icon} ${escapeHtml(cat.name)}</span></td>
-                        <td><span class="account-type-pill">${accountLabel}</span></td>
-                        <td class="text-right">${amountHtml}</td>
+                        <td class="col-cat"><span class="category-chip">${cat.icon} ${escapeHtml(cat.name)}</span></td>
+                        <td class="col-acc"><span class="account-type-pill">${accountLabel}</span></td>
+                        <td class="col-amount">${amountHtml}</td>
                     </tr>
                 `;
             }).join('');
