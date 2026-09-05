@@ -1013,15 +1013,20 @@ a {
     position: relative;
     flex: 2;
     min-width: 240px;
+    display: flex;
+    align-items: center;
 }
 
 .search-input-wrapper input {
     width: 100%;
-    padding: 10px 36px 10px 38px;
+    height: 42px;
+    padding: 0 38px 0 40px;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-surface-subtle);
     font-size: 14px;
+    color: var(--text-primary);
+    box-sizing: border-box;
     transition: all var(--transition-fast);
 }
 
@@ -1034,20 +1039,39 @@ a {
 
 .search-icon {
     position: absolute;
-    left: 12px;
+    left: 14px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
+    pointer-events: none;
+    display: block;
+    width: 18px;
+    height: 18px;
+    z-index: 2;
 }
 
 .search-clear-btn {
     position: absolute;
-    right: 12px;
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
     font-size: 18px;
     line-height: 1;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.search-clear-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface-hover);
 }
 
 .filter-selects {
