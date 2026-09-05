@@ -380,8 +380,8 @@
                             </svg>
                             <span>Download PDF</span>
                         </button>
-                        <button class="btn btn-outline" onclick="exportTransactionsCSV()" title="Export transactions to CSV spreadsheet">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        <button class="btn btn-outline btn-sm" onclick="exportTransactionsCSV()" title="Export transactions to CSV spreadsheet">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="7 10 12 15 17 10"></polyline>
@@ -389,8 +389,8 @@
                             </svg>
                             <span>Export CSV</span>
                         </button>
-                        <button class="btn btn-primary" onclick="openTransactionModal('in')">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        <button class="btn btn-primary btn-sm desktop-add-tx-btn" onclick="openTransactionModal('in')">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -402,61 +402,83 @@
 
                 <!-- Filter and Search Bar -->
                 <div class="card filter-card">
-                    <div class="filter-row-primary">
+                    <!-- Primary Search & Filter Toggle Row -->
+                    <div class="tx-search-bar-row">
                         <div class="search-input-wrapper">
-                            <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2">
                                 <circle cx="11" cy="11" r="8"></circle>
                                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                             </svg>
                             <input type="text" id="tx-search-input"
-                                placeholder="Search by description, note, person, account, category..."
+                                placeholder="Search description, note, person, account..."
                                 oninput="handleTxFilterChange()">
                             <button id="tx-search-clear" class="search-clear-btn" onclick="clearTxSearch()"
                                 style="display:none;" title="Clear search">&times;</button>
                         </div>
+                        <button type="button" id="tx-filter-toggle-btn" class="btn btn-outline btn-sm tx-filter-toggle" onclick="toggleTxFilterDrawer()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                            </svg>
+                            <span>Filters</span>
+                            <span id="tx-active-filters-badge" class="tx-filter-count-badge" style="display:none;">0</span>
+                        </button>
+                    </div>
+
+                    <!-- Quick Horizontal Type Pills -->
+                    <div class="tx-quick-type-pills">
+                        <button type="button" class="tx-type-pill active" data-type="all" onclick="setTxQuickType('all')">All</button>
+                        <button type="button" class="tx-type-pill" data-type="in" onclick="setTxQuickType('in')">Income</button>
+                        <button type="button" class="tx-type-pill" data-type="out" onclick="setTxQuickType('out')">Expense</button>
+                        <button type="button" class="tx-type-pill" data-type="transfer_account" onclick="setTxQuickType('transfer_account')">Bank Transfer</button>
+                        <button type="button" class="tx-type-pill" data-type="transfer_person" onclick="setTxQuickType('transfer_person')">Ownership</button>
+                    </div>
+
+                    <!-- Collapsible Advanced Filters Drawer -->
+                    <div id="tx-advanced-filters" class="tx-advanced-filters-panel" style="display:none;">
                         <div class="filter-selects">
+                            <!-- Hidden type select for JS filter state synchronization -->
+                            <select id="tx-filter-type" style="display:none;" onchange="handleTxFilterChange()">
+                                <option value="all">All Types</option>
+                                <option value="in">Money In (Income)</option>
+                                <option value="out">Money Out (Expense)</option>
+                                <option value="transfer_account">Account Transfer</option>
+                                <option value="transfer_person">Ownership Transfer</option>
+                            </select>
+
                             <div class="filter-select-group">
-                                <select id="tx-filter-type" onchange="handleTxFilterChange()" aria-label="Filter by Type">
-                                    <option value="all">All Types</option>
-                                    <option value="in">Money In (Income)</option>
-                                    <option value="out">Money Out (Expense)</option>
-                                    <option value="transfer_account">Account Transfer</option>
-                                    <option value="transfer_person">Ownership Transfer</option>
-                                </select>
-                            </div>
-                            <div class="filter-select-group">
+                                <label class="filter-label">Account</label>
                                 <select id="tx-filter-account" onchange="handleTxFilterChange()" aria-label="Filter by Account">
                                     <option value="all">All Accounts</option>
                                 </select>
                             </div>
                             <div class="filter-select-group">
+                                <label class="filter-label">Person</label>
                                 <select id="tx-filter-person" onchange="handleTxFilterChange()" aria-label="Filter by Person">
                                     <option value="all">All People</option>
                                 </select>
                             </div>
                             <div class="filter-select-group">
+                                <label class="filter-label">Category</label>
                                 <select id="tx-filter-category" onchange="handleTxFilterChange()" aria-label="Filter by Category">
                                     <option value="all">All Categories</option>
                                 </select>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="filter-row-secondary">
-                        <div class="date-preset-pills">
-                            <button class="pill-btn active" data-range="all" onclick="setDateRangePreset('all')">All Time</button>
-                            <button class="pill-btn" data-range="this_month"
-                                onclick="setDateRangePreset('this_month')">This Month</button>
-                            <button class="pill-btn" data-range="last_month"
-                                onclick="setDateRangePreset('last_month')">Last Month</button>
-                            <button class="pill-btn" data-range="last_30" onclick="setDateRangePreset('last_30')">Last 30 Days</button>
-                            <button class="pill-btn" data-range="custom" onclick="setDateRangePreset('custom')">Custom Range</button>
-                        </div>
-                        <div id="custom-date-inputs" class="custom-date-range" style="display:none;">
-                            <input type="date" id="tx-filter-date-start" onchange="handleTxFilterChange()">
-                            <span class="date-sep">to</span>
-                            <input type="date" id="tx-filter-date-end" onchange="handleTxFilterChange()">
+                        <div class="filter-row-secondary">
+                            <div class="date-preset-pills">
+                                <button class="pill-btn active" data-range="all" onclick="setDateRangePreset('all')">All Time</button>
+                                <button class="pill-btn" data-range="this_month" onclick="setDateRangePreset('this_month')">This Month</button>
+                                <button class="pill-btn" data-range="last_month" onclick="setDateRangePreset('last_month')">Last Month</button>
+                                <button class="pill-btn" data-range="last_30" onclick="setDateRangePreset('last_30')">Last 30 Days</button>
+                                <button class="pill-btn" data-range="custom" onclick="setDateRangePreset('custom')">Custom</button>
+                            </div>
+                            <div id="custom-date-inputs" class="custom-date-range" style="display:none;">
+                                <input type="date" id="tx-filter-date-start" onchange="handleTxFilterChange()">
+                                <span class="date-sep">to</span>
+                                <input type="date" id="tx-filter-date-end" onchange="handleTxFilterChange()">
+                            </div>
                         </div>
                     </div>
 
@@ -476,29 +498,33 @@
                     </div>
                 </div>
 
-                <!-- Filter Results Summary Banner -->
+                <!-- Slim Filter Results Summary Ticker -->
                 <div class="filter-summary-bar">
                     <div class="summary-item">
-                        <span>Showing:</span>
-                        <strong id="filtered-count-badge">0 transactions</strong>
+                        <span class="text-muted">Count:</span>
+                        <strong id="filtered-count-badge">0</strong>
                     </div>
+                    <div class="summary-divider">•</div>
                     <div class="summary-item">
-                        <span>Filtered Inflow:</span>
+                        <span class="text-muted">Inflow:</span>
                         <strong id="filtered-inflow" class="text-success">+Rs. 0</strong>
                     </div>
+                    <div class="summary-divider">•</div>
                     <div class="summary-item">
-                        <span>Filtered Outflow:</span>
+                        <span class="text-muted">Outflow:</span>
                         <strong id="filtered-outflow" class="text-danger">-Rs. 0</strong>
                     </div>
+                    <div class="summary-divider">•</div>
                     <div class="summary-item">
-                        <span>Net Flow:</span>
+                        <span class="text-muted">Net:</span>
                         <strong id="filtered-net">Rs. 0</strong>
                     </div>
                 </div>
 
-                <!-- Transactions Table Card -->
+                <!-- Transactions Table & Mobile Feed Card -->
                 <div class="card table-card">
-                    <div class="table-responsive">
+                    <!-- Desktop Table (≥ 768px) -->
+                    <div class="table-responsive desktop-only">
                         <table class="ledger-table">
                             <thead>
                                 <tr>
@@ -519,6 +545,12 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Mobile Transaction Feed (< 768px) -->
+                    <div class="tx-mobile-feed mobile-only" id="full-transaction-mobile-feed">
+                        <!-- Mobile transaction cards injected via JS -->
+                    </div>
+
                     <div id="tx-pagination-bar" class="pagination-bar">
                         <!-- Pagination controls -->
                     </div>

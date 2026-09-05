@@ -1222,6 +1222,75 @@ function getFilteredTransactions() {
     });
 }
 
+function toggleTxFilterDrawer() {
+    const drawer = document.getElementById('tx-advanced-filters');
+    const btn = document.getElementById('tx-filter-toggle-btn');
+    if (!drawer) return;
+
+    const isHidden = drawer.style.display === 'none' || getComputedStyle(drawer).display === 'none';
+    if (isHidden) {
+        drawer.style.display = 'block';
+        if (btn) btn.classList.add('active');
+    } else {
+        drawer.style.display = 'none';
+        if (btn) btn.classList.remove('active');
+    }
+}
+
+function setTxQuickType(type) {
+    ui.filter.type = type;
+    const typeSelect = document.getElementById('tx-filter-type');
+    if (typeSelect) typeSelect.value = type;
+
+    syncTxFilterControls();
+    handleTxFilterChange();
+}
+
+function syncTxFilterControls() {
+    // Sync quick pills
+    const currentType = ui.filter.type || 'all';
+    document.querySelectorAll('.tx-quick-type-pills .tx-type-pill').forEach(btn => {
+        if (btn.getAttribute('data-type') === currentType) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // Count active advanced filters (account, person, category, date range)
+    let advCount = 0;
+    if (ui.filter.account && ui.filter.account !== 'all') advCount++;
+    if (ui.filter.person && ui.filter.person !== 'all') advCount++;
+    if (ui.filter.category && ui.filter.category !== 'all') advCount++;
+    if (ui.filter.rangePreset && ui.filter.rangePreset !== 'all') advCount++;
+
+    const badge = document.getElementById('tx-active-filters-badge');
+    const toggleBtn = document.getElementById('tx-filter-toggle-btn');
+    if (badge) {
+        if (advCount > 0) {
+            badge.style.display = 'inline-flex';
+            badge.innerText = advCount;
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    if (toggleBtn) {
+        const drawer = document.getElementById('tx-advanced-filters');
+        const isOpen = drawer && drawer.style.display !== 'none';
+        if (isOpen) {
+            toggleBtn.classList.add('active');
+        } else {
+            toggleBtn.classList.remove('active');
+        }
+        if (advCount > 0) {
+            toggleBtn.classList.add('has-active');
+        } else {
+            toggleBtn.classList.remove('has-active');
+        }
+    }
+}
+
 function handleTxFilterChange() {
     const searchEl = document.getElementById('tx-search-input');
     const typeEl = document.getElementById('tx-filter-type');
@@ -1352,6 +1421,8 @@ function renderActiveFilterChips() {
         bar.style.display = 'none';
         list.innerHTML = '';
     }
+
+    syncTxFilterControls();
 }
 
 function removeActiveFilter(key) {
@@ -1433,7 +1504,8 @@ function toggleSort(field) {
 
 function renderTransactionsTable() {
     const tbody = document.getElementById('full-transaction-tbody');
-    if (!tbody) return;
+    const mobileFeed = document.getElementById('full-transaction-mobile-feed');
+    if (!tbody && !mobileFeed) return;
 
     const filtered = getFilteredTransactions();
 
@@ -1466,71 +1538,156 @@ function renderTransactionsTable() {
     const pageItems = filtered.slice(startIndex, startIndex + ui.pageSize);
 
     if (!pageItems.length) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" class="text-center py-8 text-secondary">
-                    <div style="font-size: 28px; margin-bottom: 8px;">🔍</div>
-                    <div class="font-bold mb-1">No transactions match your criteria</div>
-                    <div class="text-xs text-muted mb-3">Try adjusting or resetting your filter selections.</div>
-                    <button class="btn btn-sm btn-outline" onclick="resetTxFilters()">Reset All Filters</button>
-                </td>
-            </tr>
-        `;
-    } else {
-        tbody.innerHTML = pageItems.map(t => {
-            const cat = state.categories.find(c => c.id === t.category) || { name: 'General', icon: '💳' };
-            const person = state.people.find(p => p.id === t.personId);
-            const toPerson = state.people.find(p => p.id === t.toPersonId);
-            const acc = state.accounts.find(a => a.id === t.accountId);
-            const toAcc = state.accounts.find(a => a.id === t.toAccountId);
-
-            let typeBadge = '<span class="badge-tag in">Income</span>';
-            let amountHtml = `<span class="amount-in font-mono">+${formatCurrency(t.amount)}</span>`;
-            let personDisplay = person ? `<span class="person-chip" onclick="openPersonActivityModal('${person.id}')" style="cursor:pointer;" title="View ${escapeHtml(person.name)}'s Activity"><span class="avatar-dot" style="background:${person.color || '#0f172a'};"></span>${escapeHtml(person.name)}</span>` : '—';
-            let accountDisplay = acc ? `<span class="account-type-pill">${escapeHtml(acc.name)}</span>` : '—';
-
-            if (t.type === 'out') {
-                typeBadge = '<span class="badge-tag out">Expense</span>';
-                amountHtml = `<span class="amount-out font-mono">-${formatCurrency(t.amount)}</span>`;
-            } else if (t.type === 'transfer_account') {
-                typeBadge = '<span class="badge-tag transfer">Bank Transfer</span>';
-                amountHtml = `<span class="amount-transfer font-mono">${formatCurrency(t.amount)}</span>`;
-                accountDisplay = `${acc ? acc.name : '?'} → ${toAcc ? toAcc.name : '?'}`;
-                personDisplay = '<span class="text-muted">Account Only</span>';
-            } else if (t.type === 'transfer_person') {
-                typeBadge = '<span class="badge-tag settle">Ownership Transfer</span>';
-                amountHtml = `<span class="amount-settle font-mono">${formatCurrency(t.amount)}</span>`;
-                personDisplay = `${person ? person.name : '?'} → ${toPerson ? toPerson.name : '?'}`;
-                accountDisplay = '<span class="text-muted">Ledger Pool</span>';
-            }
-
-            return `
+        if (tbody) {
+            tbody.innerHTML = `
                 <tr>
-                    <td class="font-mono text-sm">${t.date}</td>
-                    <td>${typeBadge}</td>
-                    <td>
-                        <div class="font-bold">${escapeHtml(t.desc)}</div>
-                        ${t.notes ? `<div class="text-muted text-sm">${escapeHtml(t.notes)}</div>` : ''}
-                    </td>
-                    <td>
-                        <span class="category-chip">${cat.icon} ${escapeHtml(cat.name)}</span>
-                    </td>
-                    <td>${personDisplay}</td>
-                    <td>${accountDisplay}</td>
-                    <td class="text-right">${amountHtml}</td>
-                    <td>
-                        <div class="table-actions">
-                            <button class="action-icon-btn" onclick="openTransactionModal('${t.type}', '${t.id}')" title="Edit Transaction">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                            </button>
-                            <button class="action-icon-btn delete" onclick="deleteTransaction('${t.id}')" title="Delete Transaction">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            </button>
-                        </div>
+                    <td colspan="8" class="text-center py-8 text-secondary">
+                        <div style="font-size: 28px; margin-bottom: 8px;">🔍</div>
+                        <div class="font-bold mb-1">No transactions match your criteria</div>
+                        <div class="text-xs text-muted mb-3">Try adjusting or resetting your filter selections.</div>
+                        <button class="btn btn-sm btn-outline" onclick="resetTxFilters()">Reset All Filters</button>
                     </td>
                 </tr>
             `;
-        }).join('');
+        }
+        if (mobileFeed) {
+            mobileFeed.innerHTML = `
+                <div class="activity-empty-state">
+                    <div class="activity-empty-icon">🔍</div>
+                    <div class="font-bold">No transactions match your criteria</div>
+                    <div class="text-xs text-muted">Try adjusting or resetting your filter selections.</div>
+                    <button class="btn btn-sm btn-outline" style="margin-top: 10px;" onclick="resetTxFilters()">Reset All Filters</button>
+                </div>
+            `;
+        }
+    } else {
+        if (tbody) {
+            tbody.innerHTML = pageItems.map(t => {
+                const cat = state.categories.find(c => c.id === t.category) || { name: 'General', icon: '💳' };
+                const person = state.people.find(p => p.id === t.personId);
+                const toPerson = state.people.find(p => p.id === t.toPersonId);
+                const acc = state.accounts.find(a => a.id === t.accountId);
+                const toAcc = state.accounts.find(a => a.id === t.toAccountId);
+
+                let typeBadge = '<span class="badge-tag in">Income</span>';
+                let amountHtml = `<span class="amount-in font-mono">+${formatCurrency(t.amount)}</span>`;
+                let personDisplay = person ? `<span class="person-chip" onclick="openPersonActivityModal('${person.id}')" style="cursor:pointer;" title="View ${escapeHtml(person.name)}'s Activity"><span class="avatar-dot" style="background:${person.color || '#0f172a'};"></span>${escapeHtml(person.name)}</span>` : '—';
+                let accountDisplay = acc ? `<span class="account-type-pill">${escapeHtml(acc.name)}</span>` : '—';
+
+                if (t.type === 'out') {
+                    typeBadge = '<span class="badge-tag out">Expense</span>';
+                    amountHtml = `<span class="amount-out font-mono">-${formatCurrency(t.amount)}</span>`;
+                } else if (t.type === 'transfer_account') {
+                    typeBadge = '<span class="badge-tag transfer">Bank Transfer</span>';
+                    amountHtml = `<span class="amount-transfer font-mono">${formatCurrency(t.amount)}</span>`;
+                    accountDisplay = `${acc ? escapeHtml(acc.name) : '?'} → ${toAcc ? toAcc.name : '?'}`;
+                    personDisplay = '<span class="text-muted">Account Only</span>';
+                } else if (t.type === 'transfer_person') {
+                    typeBadge = '<span class="badge-tag settle">Ownership Transfer</span>';
+                    amountHtml = `<span class="amount-settle font-mono">${formatCurrency(t.amount)}</span>`;
+                    personDisplay = `${person ? escapeHtml(person.name) : '?'} → ${toPerson ? toPerson.name : '?'}`;
+                    accountDisplay = '<span class="text-muted">Ledger Pool</span>';
+                }
+
+                return `
+                    <tr>
+                        <td class="font-mono text-sm">${t.date}</td>
+                        <td>${typeBadge}</td>
+                        <td>
+                            <div class="font-bold">${escapeHtml(t.desc)}</div>
+                            ${t.notes ? `<div class="text-muted text-sm">${escapeHtml(t.notes)}</div>` : ''}
+                        </td>
+                        <td>
+                            <span class="category-chip">${cat.icon} ${escapeHtml(cat.name)}</span>
+                        </td>
+                        <td>${personDisplay}</td>
+                        <td>${accountDisplay}</td>
+                        <td class="text-right">${amountHtml}</td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="action-icon-btn" onclick="openTransactionModal('${t.type}', '${t.id}')" title="Edit Transaction">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                </button>
+                                <button class="action-icon-btn delete" onclick="deleteTransaction('${t.id}')" title="Delete Transaction">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        if (mobileFeed) {
+            mobileFeed.innerHTML = pageItems.map(t => {
+                const cat = state.categories.find(c => c.id === t.category) || { name: 'General', icon: '💳' };
+                const person = state.people.find(p => p.id === t.personId);
+                const toPerson = state.people.find(p => p.id === t.toPersonId);
+                const acc = state.accounts.find(a => a.id === t.accountId);
+                const toAcc = state.accounts.find(a => a.id === t.toAccountId);
+
+                let iconClass = 'in';
+                let iconSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
+                let amountFormatted = `+${formatCurrency(t.amount)}`;
+                let amountClass = 'in';
+                let metaParts = [];
+
+                if (t.type === 'out') {
+                    iconClass = 'out';
+                    iconSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
+                    amountFormatted = `-${formatCurrency(t.amount)}`;
+                    amountClass = 'out';
+                    if (acc) metaParts.push(escapeHtml(acc.name));
+                    if (person) metaParts.push(escapeHtml(person.name));
+                } else if (t.type === 'transfer_account') {
+                    iconClass = 'transfer_account';
+                    iconSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>';
+                    amountFormatted = formatCurrency(t.amount);
+                    amountClass = 'transfer';
+                    metaParts.push(`${acc ? escapeHtml(acc.name) : '?'} → ${toAcc ? escapeHtml(toAcc.name) : '?'}`);
+                } else if (t.type === 'transfer_person') {
+                    iconClass = 'transfer_person';
+                    iconSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>';
+                    amountFormatted = formatCurrency(t.amount);
+                    amountClass = 'transfer';
+                    metaParts.push(`${person ? escapeHtml(person.name) : '?'} → ${toPerson ? escapeHtml(toPerson.name) : '?'}`);
+                } else {
+                    if (acc) metaParts.push(escapeHtml(acc.name));
+                    if (person) metaParts.push(escapeHtml(person.name));
+                }
+
+                const metaString = metaParts.length ? metaParts.join(' • ') : '';
+
+                return `
+                    <div class="tx-feed-card">
+                        <div class="tx-feed-left">
+                            <div class="tx-feed-icon ${iconClass}">
+                                ${iconSvg}
+                            </div>
+                            <div class="tx-feed-info">
+                                <div class="tx-feed-title">${escapeHtml(t.desc || cat.name)}</div>
+                                <div class="tx-feed-sub">
+                                    <span>${t.date}</span>
+                                    <span class="tx-feed-sub-tag">${cat.icon} ${escapeHtml(cat.name)}</span>
+                                    ${metaString ? `<span>• ${metaString}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tx-feed-right">
+                            <span class="tx-feed-amount ${amountClass}">${amountFormatted}</span>
+                            <div class="tx-feed-actions">
+                                <button type="button" class="tx-feed-action-btn" onclick="openTransactionModal('${t.type}', '${t.id}')" title="Edit">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                </button>
+                                <button type="button" class="tx-feed-action-btn btn-delete-tx" onclick="deleteTransaction('${t.id}')" title="Delete">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
     }
 
     // Render pagination controls

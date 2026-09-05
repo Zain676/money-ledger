@@ -3,7 +3,7 @@
  * Provides offline shell caching, instant startup, and PWA standalone support
  */
 
-const CACHE_NAME = 'money-ledger-v3';
+const CACHE_NAME = 'money-ledger-v4';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
