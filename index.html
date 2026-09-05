@@ -6,12 +6,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Money Ledger — Personal Financial Control & Ownership</title>
     <meta name="description" content="Personal multi-account finance tracker and multi-person money ownership ledger.">
+    
+    <!-- Early Theme Detection to prevent theme flashing on reload -->
+    <script>
+        (function () {
+            try {
+                var theme = localStorage.getItem('moneyLedger_theme');
+                if (!theme) {
+                    var saved = localStorage.getItem('moneyLedger_prod');
+                    if (saved) {
+                        var parsed = JSON.parse(saved);
+                        if (parsed.settings && parsed.settings.theme) {
+                            theme = parsed.settings.theme;
+                        }
+                    }
+                }
+                if (!theme || theme === 'system') {
+                    theme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) {}
+        })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+
+    <!-- Client-side PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 
 <body>
@@ -329,7 +356,17 @@
                             operations.</p>
                     </div>
                     <div class="header-actions">
-                        <button class="btn btn-outline" onclick="exportTransactionsCSV()">
+                        <button class="btn btn-outline" onclick="downloadTransactionsPDF()" title="Download PDF Financial Statement">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>Download PDF</span>
+                        </button>
+                        <button class="btn btn-outline" onclick="exportTransactionsCSV()" title="Export transactions to CSV spreadsheet">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -359,49 +396,69 @@
                                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                             </svg>
                             <input type="text" id="tx-search-input"
-                                placeholder="Search by note, person, account, category..."
+                                placeholder="Search by description, note, person, account, category..."
                                 oninput="handleTxFilterChange()">
                             <button id="tx-search-clear" class="search-clear-btn" onclick="clearTxSearch()"
-                                style="display:none;">&times;</button>
+                                style="display:none;" title="Clear search">&times;</button>
                         </div>
                         <div class="filter-selects">
-                            <select id="tx-filter-type" onchange="handleTxFilterChange()">
-                                <option value="all">All Types</option>
-                                <option value="in">Money In (Income)</option>
-                                <option value="out">Money Out (Expense)</option>
-                                <option value="transfer_account">Account Transfer</option>
-                                <option value="transfer_person">Ownership Transfer</option>
-                            </select>
-                            <select id="tx-filter-account" onchange="handleTxFilterChange()">
-                                <option value="all">All Accounts</option>
-                            </select>
-                            <select id="tx-filter-person" onchange="handleTxFilterChange()">
-                                <option value="all">All People</option>
-                            </select>
-                            <select id="tx-filter-category" onchange="handleTxFilterChange()">
-                                <option value="all">All Categories</option>
-                            </select>
+                            <div class="filter-select-group">
+                                <select id="tx-filter-type" onchange="handleTxFilterChange()" aria-label="Filter by Type">
+                                    <option value="all">All Types</option>
+                                    <option value="in">Money In (Income)</option>
+                                    <option value="out">Money Out (Expense)</option>
+                                    <option value="transfer_account">Account Transfer</option>
+                                    <option value="transfer_person">Ownership Transfer</option>
+                                </select>
+                            </div>
+                            <div class="filter-select-group">
+                                <select id="tx-filter-account" onchange="handleTxFilterChange()" aria-label="Filter by Account">
+                                    <option value="all">All Accounts</option>
+                                </select>
+                            </div>
+                            <div class="filter-select-group">
+                                <select id="tx-filter-person" onchange="handleTxFilterChange()" aria-label="Filter by Person">
+                                    <option value="all">All People</option>
+                                </select>
+                            </div>
+                            <div class="filter-select-group">
+                                <select id="tx-filter-category" onchange="handleTxFilterChange()" aria-label="Filter by Category">
+                                    <option value="all">All Categories</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
                     <div class="filter-row-secondary">
                         <div class="date-preset-pills">
-                            <button class="pill-btn active" data-range="all" onclick="setDateRangePreset('all')">All
-                                Time</button>
+                            <button class="pill-btn active" data-range="all" onclick="setDateRangePreset('all')">All Time</button>
                             <button class="pill-btn" data-range="this_month"
                                 onclick="setDateRangePreset('this_month')">This Month</button>
                             <button class="pill-btn" data-range="last_month"
                                 onclick="setDateRangePreset('last_month')">Last Month</button>
-                            <button class="pill-btn" data-range="last_30" onclick="setDateRangePreset('last_30')">Last
-                                30 Days</button>
-                            <button class="pill-btn" data-range="custom" onclick="setDateRangePreset('custom')">Custom
-                                Range</button>
+                            <button class="pill-btn" data-range="last_30" onclick="setDateRangePreset('last_30')">Last 30 Days</button>
+                            <button class="pill-btn" data-range="custom" onclick="setDateRangePreset('custom')">Custom Range</button>
                         </div>
                         <div id="custom-date-inputs" class="custom-date-range" style="display:none;">
                             <input type="date" id="tx-filter-date-start" onchange="handleTxFilterChange()">
-                            <span>to</span>
+                            <span class="date-sep">to</span>
                             <input type="date" id="tx-filter-date-end" onchange="handleTxFilterChange()">
                         </div>
+                    </div>
+
+                    <!-- Active Filter Chips & Reset Row -->
+                    <div id="active-filters-bar" class="active-filters-bar" style="display:none;">
+                        <div class="active-filters-left">
+                            <span class="active-filters-label">Active:</span>
+                            <div id="active-filters-list" class="active-filter-chips"></div>
+                        </div>
+                        <button type="button" class="btn-reset-filters" onclick="resetTxFilters()">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                <path d="M3 3v5h5"></path>
+                            </svg>
+                            <span>Reset Filters</span>
+                        </button>
                     </div>
                 </div>
 
@@ -932,13 +989,53 @@
                 <!-- Category & Description -->
                 <div class="form-row">
                     <div class="input-group flex-1" id="category-group">
-                        <label for="category-select">Category</label>
-                        <select id="category-select"></select>
+                        <div class="label-with-action">
+                            <label for="category-select">Category</label>
+                            <button type="button" class="btn-text-action" onclick="toggleCustomCategoryPanel()" title="Create custom category">+ Custom</button>
+                        </div>
+                        <select id="category-select" onchange="handleCategorySelectChange()"></select>
                     </div>
                     <div class="input-group flex-2">
                         <label for="description">Description / Item <span class="required">*</span></label>
                         <input type="text" id="description" placeholder="e.g. Monthly Salary, Grocery Bill, ATM Cash..."
                             required>
+                    </div>
+                </div>
+
+                <!-- Inline Custom Category Creation Box -->
+                <div id="custom-category-panel" class="custom-category-panel" style="display:none;">
+                    <div class="custom-cat-header">
+                        <span class="custom-cat-title">✨ Create Custom Category</span>
+                        <button type="button" class="custom-cat-close-btn" onclick="toggleCustomCategoryPanel(false)">&times;</button>
+                    </div>
+                    <div class="custom-cat-body">
+                        <div class="custom-cat-emoji-wrapper">
+                            <button type="button" id="custom-cat-icon-btn" class="custom-cat-icon-btn" onclick="toggleEmojiPicker()" title="Pick emoji">🏷️</button>
+                            <div id="custom-emoji-picker" class="custom-emoji-picker" style="display:none;">
+                                <span class="emoji-opt" onclick="selectCustomEmoji('💼')">💼</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('🛒')">🛒</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('🍔')">🍔</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('⚡')">⚡</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('🏠')">🏠</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('🚗')">🚗</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('🛍️')">🛍️</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('🎬')">🎬</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('🏥')">🏥</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('📚')">📚</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('🏋️')">🏋️</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('✈️')">✈️</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('🎁')">🎁</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('💻')">💻</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('📈')">📈</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('☕')">☕</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('🎮')">🎮</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('👶')">👶</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('🐾')">🐾</span>
+                                <span class="emoji-opt" onclick="selectCustomEmoji('🏷️')">🏷️</span>
+                            </div>
+                        </div>
+                        <input type="text" id="custom-cat-name-input" class="custom-cat-input" placeholder="Category Name (e.g. Gym, Pet Care, Freelance)..." onkeydown="if(event.key==='Enter'){event.preventDefault();handleCreateCustomCategory();}">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="handleCreateCustomCategory()">Create</button>
                     </div>
                 </div>
 
@@ -1116,7 +1213,96 @@
         </div>
     </div>
 
-    <!-- 5. Confirmation Dialog Modal -->
+    <!-- 5. Person Activity & Statement Modal -->
+    <div id="person-activity-modal" class="modal-overlay" onclick="handleModalBackdropClick(event, 'person-activity-modal')">
+        <div class="modal-card modal-lg activity-modal-card">
+            <div class="modal-header">
+                <div class="activity-modal-profile">
+                    <div id="activity-modal-avatar" class="person-avatar-circle" style="background:#0f172a;">?</div>
+                    <div>
+                        <div class="activity-modal-title-row">
+                            <h2 id="activity-modal-name">Person Name</h2>
+                            <span id="activity-modal-balance-badge" class="badge-balance font-mono">Rs. 0</span>
+                        </div>
+                        <p id="activity-modal-notes" class="text-secondary text-sm">Ledger Owner</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeModal('person-activity-modal')">&times;</button>
+            </div>
+
+            <!-- Person Financial Stats Grid -->
+            <div class="activity-stats-grid">
+                <div class="activity-stat-card">
+                    <span class="label-caps">Total Inflow / Earned</span>
+                    <div id="activity-modal-inflow" class="activity-stat-val text-success font-mono">+Rs. 0</div>
+                </div>
+                <div class="activity-stat-card">
+                    <span class="label-caps">Total Outflow / Spent</span>
+                    <div id="activity-modal-outflow" class="activity-stat-val text-danger font-mono">-Rs. 0</div>
+                </div>
+                <div class="activity-stat-card">
+                    <span class="label-caps">Transfers / Settle</span>
+                    <div id="activity-modal-transfers" class="activity-stat-val text-primary font-mono">Rs. 0</div>
+                </div>
+                <div class="activity-stat-card">
+                    <span class="label-caps">Total Activities</span>
+                    <div id="activity-modal-count" class="activity-stat-val font-mono">0</div>
+                </div>
+            </div>
+
+            <!-- Action Toolbar -->
+            <div class="activity-modal-toolbar">
+                <div class="toolbar-left">
+                    <button id="activity-modal-pdf-btn" class="btn btn-primary" onclick="downloadActivePersonPDF()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                        <span>Download Statement (PDF)</span>
+                    </button>
+                    <button id="activity-modal-settle-btn" class="btn btn-outline" onclick="settleActivePersonFromModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <polyline points="16 11 18 13 22 9"></polyline>
+                        </svg>
+                        <span>Settle Balance</span>
+                    </button>
+                </div>
+                <button id="activity-modal-filter-btn" class="btn btn-ghost btn-sm" onclick="filterActivePersonInTable()">
+                    <span>View in Main Table &rarr;</span>
+                </button>
+            </div>
+
+            <!-- Person Activity Timeline Table -->
+            <div class="activity-table-wrapper">
+                <table class="ledger-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Account / Wallet</th>
+                            <th class="text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activity-modal-tbody">
+                        <!-- Injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-actions justify-between">
+                <span class="text-muted text-xs">Complete chronological ledger audit trail</span>
+                <button type="button" class="btn btn-ghost" onclick="closeModal('person-activity-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Confirmation Dialog Modal -->
     <div id="confirm-modal" class="modal-overlay" onclick="handleModalBackdropClick(event, 'confirm-modal')">
         <div class="modal-card modal-sm text-center">
             <div class="confirm-icon-box">

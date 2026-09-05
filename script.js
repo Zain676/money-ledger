@@ -81,6 +81,8 @@ function init() {
     loadStateFromStorage();
     initTheme();
     setupEventListeners();
+    populateFilterDropdowns();
+    populateSelectDropdowns();
     handleHashNavigation();
     renderApp();
     initCloudSync();
@@ -477,6 +479,8 @@ function setTxModalType(type) {
     populateCategoryDropdown(type);
 }
 
+let customCatSelectedEmoji = '🏷️';
+
 function populateCategoryDropdown(type) {
     const select = document.getElementById('category-select');
     if (!select) return;
@@ -490,9 +494,119 @@ function populateCategoryDropdown(type) {
         filtered = state.categories.filter(c => c.type === 'both' || c.id === 'cat_transfer');
     }
 
-    select.innerHTML = filtered.map(c => `
-        <option value="${c.id}">${c.icon} ${c.name}</option>
+    const optionsHtml = filtered.map(c => `
+        <option value="${c.id}">${c.icon} ${escapeHtml(c.name)}</option>
     `).join('');
+
+    select.innerHTML = optionsHtml + `<option value="__custom__">✨ + Add Custom Category...</option>`;
+}
+
+function handleCategorySelectChange() {
+    const select = document.getElementById('category-select');
+    if (select && select.value === '__custom__') {
+        toggleCustomCategoryPanel(true);
+    }
+}
+
+function toggleCustomCategoryPanel(forceState) {
+    const panel = document.getElementById('custom-category-panel');
+    if (!panel) return;
+    const isCurrentlyOpen = panel.style.display !== 'none' && panel.style.display !== '';
+    const shouldShow = forceState !== undefined ? forceState : !isCurrentlyOpen;
+    panel.style.display = shouldShow ? 'block' : 'none';
+    if (shouldShow) {
+        const input = document.getElementById('custom-cat-name-input');
+        if (input) {
+            input.value = '';
+            setTimeout(() => input.focus(), 50);
+        }
+    }
+}
+
+function toggleEmojiPicker() {
+    const picker = document.getElementById('custom-emoji-picker');
+    if (!picker) return;
+    picker.style.display = (picker.style.display === 'none' || !picker.style.display) ? 'grid' : 'none';
+}
+
+function selectCustomEmoji(emoji) {
+    customCatSelectedEmoji = emoji;
+    const btn = document.getElementById('custom-cat-icon-btn');
+    if (btn) btn.innerText = emoji;
+    const picker = document.getElementById('custom-emoji-picker');
+    if (picker) picker.style.display = 'none';
+}
+
+function handleCreateCustomCategory() {
+    const input = document.getElementById('custom-cat-name-input');
+    const name = input ? input.value.trim() : '';
+    if (!name) {
+        showToast('Please enter a category name', 'error');
+        if (input) input.focus();
+        return;
+    }
+
+    const typeInput = document.getElementById('trans-type');
+    const type = typeInput ? typeInput.value : 'both';
+    const catType = (type === 'in' || type === 'out') ? type : 'both';
+    
+    // Check for duplicate category name
+    const existing = state.categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+        showToast(`Category "${existing.name}" already exists`, 'info');
+        populateCategoryDropdown(type);
+        const catSelect = document.getElementById('category-select');
+        if (catSelect) catSelect.value = existing.id;
+        toggleCustomCategoryPanel(false);
+        return;
+    }
+
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#14b8a6', '#f43f5e', '#6366f1'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+    const newCat = {
+        id: `cat_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        name,
+        icon: customCatSelectedEmoji || '🏷️',
+        type: catType,
+        color: randomColor
+    };
+
+    state.categories.push(newCat);
+    saveState();
+    syncToCloud();
+
+    // Refresh category selects across the application
+    populateCategoryDropdown(type);
+    populateFilterDropdowns();
+
+    const select = document.getElementById('category-select');
+    if (select) select.value = newCat.id;
+
+    toggleCustomCategoryPanel(false);
+    showToast(`Created category "${newCat.name}"`, 'success');
+}
+
+function populateFilterDropdowns() {
+    const filterAcc = document.getElementById('tx-filter-account');
+    const filterP = document.getElementById('tx-filter-person');
+    const filterCat = document.getElementById('tx-filter-category');
+
+    if (filterAcc) {
+        const currentVal = ui.filter.account || filterAcc.value || 'all';
+        filterAcc.innerHTML = `<option value="all">All Accounts</option>` + state.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
+        filterAcc.value = currentVal;
+    }
+    if (filterP) {
+        const currentVal = ui.filter.person || filterP.value || 'all';
+        filterP.innerHTML = `<option value="all">All People</option>` + state.people.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+        filterP.value = currentVal;
+    }
+    if (filterCat) {
+        const currentVal = ui.filter.category || filterCat.value || 'all';
+        filterCat.innerHTML = `<option value="all">All Categories</option>` + state.categories.map(c => `<option value="${c.id}">${c.icon} ${escapeHtml(c.name)}</option>`).join('');
+        filterCat.value = currentVal;
+    }
 }
 
 function populateSelectDropdowns() {
@@ -505,8 +619,8 @@ function populateSelectDropdowns() {
     const settleFromP = document.getElementById('settle-from-person');
     const settleToP = document.getElementById('settle-to-person');
 
-    const peopleOptions = state.people.map(p => `<option value="${p.id}">${p.name} (${formatCurrency(p.balance)})</option>`).join('');
-    const accountOptions = state.accounts.map(a => `<option value="${a.id}">${a.name} (${formatCurrency(a.balance)})</option>`).join('');
+    const peopleOptions = state.people.map(p => `<option value="${p.id}">${escapeHtml(p.name)} (${formatCurrency(p.balance)})</option>`).join('');
+    const accountOptions = state.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)} (${formatCurrency(a.balance)})</option>`).join('');
 
     if (pSelect) pSelect.innerHTML = peopleOptions;
     if (aSelect) aSelect.innerHTML = accountOptions;
@@ -517,20 +631,7 @@ function populateSelectDropdowns() {
     if (settleFromP) settleFromP.innerHTML = peopleOptions;
     if (settleToP) settleToP.innerHTML = peopleOptions;
 
-    // Filters in Transactions View
-    const filterAcc = document.getElementById('tx-filter-account');
-    const filterP = document.getElementById('tx-filter-person');
-    const filterCat = document.getElementById('tx-filter-category');
-
-    if (filterAcc) {
-        filterAcc.innerHTML = `<option value="all">All Accounts</option>` + state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-    }
-    if (filterP) {
-        filterP.innerHTML = `<option value="all">All People</option>` + state.people.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-    }
-    if (filterCat) {
-        filterCat.innerHTML = `<option value="all">All Categories</option>` + state.categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
-    }
+    populateFilterDropdowns();
 }
 
 // Quick Settle / Debt Wizard
@@ -769,8 +870,11 @@ function setPersonColor(color) {
 // ============================================================================
 
 function renderApp() {
+    populateFilterDropdowns();
+    populateSelectDropdowns();
     renderSidebarStats();
     renderOverview();
+    renderActiveFilterChips();
     renderTransactionsTable();
     renderAccountsManagement();
     renderPeopleManagement();
@@ -1026,6 +1130,12 @@ function renderTransactionListItem(t) {
 // 7. TRANSACTIONS LEDGER, SEARCH, FILTER & CSV EXPORT
 // ============================================================================
 
+// ============================================================================
+// 7. TRANSACTIONS LEDGER, SEARCH, FILTER & PDF/CSV EXPORTS
+// ============================================================================
+
+let currentActivePersonId = null;
+
 function getFilteredTransactions() {
     return state.transactions.filter(t => {
         // 1. Search Query
@@ -1049,27 +1159,29 @@ function getFilteredTransactions() {
         }
 
         // 2. Type Filter
-        if (ui.filter.type !== 'all' && t.type !== ui.filter.type) {
+        if (ui.filter.type && ui.filter.type !== 'all' && t.type !== ui.filter.type) {
             return false;
         }
 
         // 3. Account Filter
-        if (ui.filter.account !== 'all') {
+        if (ui.filter.account && ui.filter.account !== 'all') {
             if (t.accountId !== ui.filter.account && t.toAccountId !== ui.filter.account) {
                 return false;
             }
         }
 
         // 4. Person Filter
-        if (ui.filter.person !== 'all') {
+        if (ui.filter.person && ui.filter.person !== 'all') {
             if (t.personId !== ui.filter.person && t.toPersonId !== ui.filter.person) {
                 return false;
             }
         }
 
         // 5. Category Filter
-        if (ui.filter.category !== 'all' && t.category !== ui.filter.category) {
-            return false;
+        if (ui.filter.category && ui.filter.category !== 'all') {
+            if (t.category !== ui.filter.category) {
+                return false;
+            }
         }
 
         // 6. Date Range Filter
@@ -1102,11 +1214,17 @@ function getFilteredTransactions() {
 }
 
 function handleTxFilterChange() {
-    ui.filter.search = document.getElementById('tx-search-input').value.trim();
-    ui.filter.type = document.getElementById('tx-filter-type').value;
-    ui.filter.account = document.getElementById('tx-filter-account').value;
-    ui.filter.person = document.getElementById('tx-filter-person').value;
-    ui.filter.category = document.getElementById('tx-filter-category').value;
+    const searchEl = document.getElementById('tx-search-input');
+    const typeEl = document.getElementById('tx-filter-type');
+    const accEl = document.getElementById('tx-filter-account');
+    const personEl = document.getElementById('tx-filter-person');
+    const catEl = document.getElementById('tx-filter-category');
+
+    if (searchEl) ui.filter.search = searchEl.value.trim();
+    if (typeEl) ui.filter.type = typeEl.value;
+    if (accEl) ui.filter.account = accEl.value;
+    if (personEl) ui.filter.person = personEl.value;
+    if (catEl) ui.filter.category = catEl.value;
 
     const clearBtn = document.getElementById('tx-search-clear');
     if (clearBtn) {
@@ -1114,16 +1232,20 @@ function handleTxFilterChange() {
     }
 
     if (ui.filter.rangePreset === 'custom') {
-        ui.filter.startDate = document.getElementById('tx-filter-date-start').value;
-        ui.filter.endDate = document.getElementById('tx-filter-date-end').value;
+        const startEl = document.getElementById('tx-filter-date-start');
+        const endEl = document.getElementById('tx-filter-date-end');
+        if (startEl) ui.filter.startDate = startEl.value;
+        if (endEl) ui.filter.endDate = endEl.value;
     }
 
     ui.currentPage = 1;
+    renderActiveFilterChips();
     renderTransactionsTable();
 }
 
 function clearTxSearch() {
-    document.getElementById('tx-search-input').value = '';
+    const input = document.getElementById('tx-search-input');
+    if (input) input.value = '';
     handleTxFilterChange();
 }
 
@@ -1143,6 +1265,145 @@ function setDateRangePreset(preset) {
     }
 
     handleTxFilterChange();
+}
+
+function renderActiveFilterChips() {
+    const bar = document.getElementById('active-filters-bar');
+    const list = document.getElementById('active-filters-list');
+    if (!bar || !list) return;
+
+    const chips = [];
+
+    if (ui.filter.search) {
+        chips.push({
+            key: 'search',
+            label: `Search: "${ui.filter.search}"`
+        });
+    }
+
+    if (ui.filter.type && ui.filter.type !== 'all') {
+        const typeLabels = {
+            'in': 'Money In (Income)',
+            'out': 'Money Out (Expense)',
+            'transfer_account': 'Bank Transfer',
+            'transfer_person': 'Ownership Transfer'
+        };
+        chips.push({
+            key: 'type',
+            label: `Type: ${typeLabels[ui.filter.type] || ui.filter.type}`
+        });
+    }
+
+    if (ui.filter.account && ui.filter.account !== 'all') {
+        const acc = state.accounts.find(a => a.id === ui.filter.account);
+        chips.push({
+            key: 'account',
+            label: `Account: ${acc ? acc.name : ui.filter.account}`
+        });
+    }
+
+    if (ui.filter.person && ui.filter.person !== 'all') {
+        const person = state.people.find(p => p.id === ui.filter.person);
+        chips.push({
+            key: 'person',
+            label: `Person: ${person ? person.name : ui.filter.person}`
+        });
+    }
+
+    if (ui.filter.category && ui.filter.category !== 'all') {
+        const cat = state.categories.find(c => c.id === ui.filter.category);
+        chips.push({
+            key: 'category',
+            label: `Category: ${cat ? cat.icon + ' ' + cat.name : ui.filter.category}`
+        });
+    }
+
+    if (ui.filter.rangePreset && ui.filter.rangePreset !== 'all') {
+        const rangeLabels = {
+            'this_month': 'This Month',
+            'last_month': 'Last Month',
+            'last_30': 'Last 30 Days',
+            'custom': `Custom: ${ui.filter.startDate || 'Start'} to ${ui.filter.endDate || 'End'}`
+        };
+        chips.push({
+            key: 'rangePreset',
+            label: rangeLabels[ui.filter.rangePreset] || ui.filter.rangePreset
+        });
+    }
+
+    if (chips.length > 0) {
+        bar.style.display = 'flex';
+        list.innerHTML = chips.map(c => `
+            <span class="active-filter-chip">
+                <span>${escapeHtml(c.label)}</span>
+                <button type="button" class="chip-remove-btn" onclick="removeActiveFilter('${c.key}')" title="Remove filter">&times;</button>
+            </span>
+        `).join('');
+    } else {
+        bar.style.display = 'none';
+        list.innerHTML = '';
+    }
+}
+
+function removeActiveFilter(key) {
+    if (key === 'search') {
+        ui.filter.search = '';
+        const el = document.getElementById('tx-search-input');
+        if (el) el.value = '';
+    } else if (key === 'type') {
+        ui.filter.type = 'all';
+        const el = document.getElementById('tx-filter-type');
+        if (el) el.value = 'all';
+    } else if (key === 'account') {
+        ui.filter.account = 'all';
+        const el = document.getElementById('tx-filter-account');
+        if (el) el.value = 'all';
+    } else if (key === 'person') {
+        ui.filter.person = 'all';
+        const el = document.getElementById('tx-filter-person');
+        if (el) el.value = 'all';
+    } else if (key === 'category') {
+        ui.filter.category = 'all';
+        const el = document.getElementById('tx-filter-category');
+        if (el) el.value = 'all';
+    } else if (key === 'rangePreset') {
+        setDateRangePreset('all');
+        return;
+    }
+
+    handleTxFilterChange();
+}
+
+function resetTxFilters() {
+    ui.filter.search = '';
+    ui.filter.type = 'all';
+    ui.filter.account = 'all';
+    ui.filter.person = 'all';
+    ui.filter.category = 'all';
+    ui.filter.rangePreset = 'all';
+    ui.filter.startDate = '';
+    ui.filter.endDate = '';
+
+    const searchInput = document.getElementById('tx-search-input');
+    if (searchInput) searchInput.value = '';
+    const typeSelect = document.getElementById('tx-filter-type');
+    if (typeSelect) typeSelect.value = 'all';
+    const accSelect = document.getElementById('tx-filter-account');
+    if (accSelect) accSelect.value = 'all';
+    const personSelect = document.getElementById('tx-filter-person');
+    if (personSelect) personSelect.value = 'all';
+    const catSelect = document.getElementById('tx-filter-category');
+    if (catSelect) catSelect.value = 'all';
+
+    document.querySelectorAll('.date-preset-pills .pill-btn').forEach(btn => {
+        if (btn.getAttribute('data-range') === 'all') btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+    const customInputs = document.getElementById('custom-date-inputs');
+    if (customInputs) customInputs.style.display = 'none';
+
+    handleTxFilterChange();
+    showToast('All transaction filters cleared', 'info');
 }
 
 function toggleSort(field) {
@@ -1199,7 +1460,10 @@ function renderTransactionsTable() {
         tbody.innerHTML = `
             <tr>
                 <td colspan="8" class="text-center py-8 text-secondary">
-                    No transactions match your current filter criteria.
+                    <div style="font-size: 28px; margin-bottom: 8px;">🔍</div>
+                    <div class="font-bold mb-1">No transactions match your criteria</div>
+                    <div class="text-xs text-muted mb-3">Try adjusting or resetting your filter selections.</div>
+                    <button class="btn btn-sm btn-outline" onclick="resetTxFilters()">Reset All Filters</button>
                 </td>
             </tr>
         `;
@@ -1213,7 +1477,7 @@ function renderTransactionsTable() {
 
             let typeBadge = '<span class="badge-tag in">Income</span>';
             let amountHtml = `<span class="amount-in font-mono">+${formatCurrency(t.amount)}</span>`;
-            let personDisplay = person ? `<span class="person-chip"><span class="avatar-dot" style="background:${person.color || '#0f172a'};"></span>${escapeHtml(person.name)}</span>` : '—';
+            let personDisplay = person ? `<span class="person-chip" onclick="openPersonActivityModal('${person.id}')" style="cursor:pointer;" title="View ${escapeHtml(person.name)}'s Activity"><span class="avatar-dot" style="background:${person.color || '#0f172a'};"></span>${escapeHtml(person.name)}</span>` : '—';
             let accountDisplay = acc ? `<span class="account-type-pill">${escapeHtml(acc.name)}</span>` : '—';
 
             if (t.type === 'out') {
@@ -1287,15 +1551,59 @@ function changePage(newPage) {
 }
 
 function filterByAccount(accId) {
+    ui.filter.search = '';
+    ui.filter.type = 'all';
+    ui.filter.person = 'all';
+    ui.filter.category = 'all';
+    ui.filter.rangePreset = 'all';
+    ui.filter.account = accId;
+    ui.currentPage = 1;
+
     switchView('transactions');
-    document.getElementById('tx-filter-account').value = accId;
-    handleTxFilterChange();
+    populateFilterDropdowns();
+
+    const accSelect = document.getElementById('tx-filter-account');
+    if (accSelect) accSelect.value = accId;
+
+    renderActiveFilterChips();
+    renderTransactionsTable();
 }
 
 function filterByPerson(personId) {
+    ui.filter.search = '';
+    ui.filter.type = 'all';
+    ui.filter.account = 'all';
+    ui.filter.category = 'all';
+    ui.filter.rangePreset = 'all';
+    ui.filter.startDate = '';
+    ui.filter.endDate = '';
+    ui.filter.person = personId;
+    ui.currentPage = 1;
+
     switchView('transactions');
-    document.getElementById('tx-filter-person').value = personId;
-    handleTxFilterChange();
+    populateFilterDropdowns();
+
+    // Reset filter inputs
+    const searchInput = document.getElementById('tx-search-input');
+    if (searchInput) searchInput.value = '';
+    const typeSelect = document.getElementById('tx-filter-type');
+    if (typeSelect) typeSelect.value = 'all';
+    const accSelect = document.getElementById('tx-filter-account');
+    if (accSelect) accSelect.value = 'all';
+    const catSelect = document.getElementById('tx-filter-category');
+    if (catSelect) catSelect.value = 'all';
+    const personSelect = document.getElementById('tx-filter-person');
+    if (personSelect) personSelect.value = personId;
+
+    document.querySelectorAll('.date-preset-pills .pill-btn').forEach(btn => {
+        if (btn.getAttribute('data-range') === 'all') btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+    const customInputs = document.getElementById('custom-date-inputs');
+    if (customInputs) customInputs.style.display = 'none';
+
+    renderActiveFilterChips();
+    renderTransactionsTable();
 }
 
 function exportTransactionsCSV() {
@@ -1339,6 +1647,516 @@ function exportTransactionsCSV() {
     link.click();
     document.body.removeChild(link);
     showToast('CSV file exported successfully', 'success');
+}
+
+// PDF Generation Functions
+function downloadPersonPDF(personId) {
+    const person = state.people.find(p => p.id === personId);
+    if (!person) {
+        showToast('Person not found', 'error');
+        return;
+    }
+
+    const personTx = state.transactions.filter(t => t.personId === personId || t.toPersonId === personId);
+
+    if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+        showToast('Loading PDF generator... please retry in a moment', 'info');
+        return;
+    }
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'pt',
+            format: 'a4'
+        });
+
+        const currency = state.settings.currency.trim();
+        const generatedDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        let totalIn = 0;
+        let totalOut = 0;
+        let totalTransfers = 0;
+
+        personTx.forEach(t => {
+            if (t.type === 'in' && t.personId === personId) totalIn += t.amount;
+            else if (t.type === 'out' && t.personId === personId) totalOut += t.amount;
+            else if (t.type === 'transfer_person') {
+                if (t.personId === personId) totalTransfers -= t.amount;
+                if (t.toPersonId === personId) totalTransfers += t.amount;
+            }
+        });
+
+        // 1. Header Banner
+        doc.setFillColor(37, 99, 235);
+        doc.rect(0, 0, 595.28, 65, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text('MONEY LEDGER', 40, 32);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9.5);
+        doc.text('PERSONAL FINANCIAL STATEMENT & AUDIT TRAIL', 40, 48);
+
+        doc.setFontSize(8.5);
+        doc.text(`Generated: ${generatedDate}`, 555.28 - 40, 40, { align: 'right' });
+
+        // 2. Person Info Section
+        doc.setTextColor(15, 23, 42);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text(`Statement for: ${person.name}`, 40, 95);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Role / Notes: ${person.notes || 'Ledger Owner'}`, 40, 110);
+
+        // 3. Summary Stat Cards Box
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(40, 125, 515.28, 52, 6, 6, 'FD');
+
+        const colWidth = 515.28 / 4;
+        
+        // Stat 1: Current Balance
+        doc.setFontSize(7.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text('CURRENT BALANCE', 40 + 12, 142);
+        doc.setFontSize(10.5);
+        doc.setFont('helvetica', 'bold');
+        if (person.balance >= 0) {
+            doc.setTextColor(16, 185, 129);
+        } else {
+            doc.setTextColor(239, 68, 68);
+        }
+        doc.text(`${currency} ${person.balance.toLocaleString()}`, 40 + 12, 160);
+
+        // Stat 2: Total Inflow
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 116, 139);
+        doc.text('TOTAL INFLOW', 40 + colWidth + 8, 142);
+        doc.setFontSize(10.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(16, 185, 129);
+        doc.text(`+${currency} ${totalIn.toLocaleString()}`, 40 + colWidth + 8, 160);
+
+        // Stat 3: Total Outflow
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 116, 139);
+        doc.text('TOTAL OUTFLOW', 40 + colWidth * 2 + 8, 142);
+        doc.setFontSize(10.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(239, 68, 68);
+        doc.text(`-${currency} ${totalOut.toLocaleString()}`, 40 + colWidth * 2 + 8, 160);
+
+        // Stat 4: Total Records
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 116, 139);
+        doc.text('TOTAL ACTIVITIES', 40 + colWidth * 3 + 8, 142);
+        doc.setFontSize(10.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(15, 23, 42);
+        doc.text(`${personTx.length} records`, 40 + colWidth * 3 + 8, 160);
+
+        // 4. Transactions Table
+        const tableRows = personTx.map(t => {
+            const cat = state.categories.find(c => c.id === t.category);
+            const acc = state.accounts.find(a => a.id === t.accountId);
+            const otherPerson = t.type === 'transfer_person' 
+                ? (t.personId === personId ? state.people.find(p => p.id === t.toPersonId) : state.people.find(p => p.id === t.personId))
+                : null;
+
+            let typeLabel = 'Income';
+            let amountPrefix = '+';
+            if (t.type === 'out') {
+                typeLabel = 'Expense';
+                amountPrefix = '-';
+            } else if (t.type === 'transfer_person') {
+                typeLabel = t.personId === personId ? `Transfer to ${otherPerson ? otherPerson.name : '?'}` : `From ${otherPerson ? otherPerson.name : '?'}`;
+                amountPrefix = t.personId === personId ? '-' : '+';
+            } else if (t.type === 'transfer_account') {
+                typeLabel = 'Bank Transfer';
+                amountPrefix = '';
+            }
+
+            const accLabel = acc ? acc.name : (t.type === 'transfer_person' ? 'Ledger Pool' : '—');
+            const catLabel = cat ? cat.name : (t.type === 'transfer_person' ? 'Settlement' : 'General');
+
+            return [
+                t.date || '—',
+                typeLabel,
+                t.desc + (t.notes ? ` (${t.notes})` : ''),
+                catLabel,
+                accLabel,
+                `${amountPrefix}${currency} ${t.amount.toLocaleString()}`
+            ];
+        });
+
+        if (doc.autoTable) {
+            doc.autoTable({
+                head: [['Date', 'Type', 'Description', 'Category', 'Account', 'Amount']],
+                body: tableRows.length ? tableRows : [['—', '—', 'No transaction activity recorded for this person yet', '—', '—', '—']],
+                startY: 195,
+                theme: 'striped',
+                headStyles: {
+                    fillColor: [37, 99, 235],
+                    textColor: 255,
+                    fontStyle: 'bold',
+                    fontSize: 8.5
+                },
+                bodyStyles: {
+                    fontSize: 8,
+                    textColor: [30, 41, 59]
+                },
+                alternateRowStyles: {
+                    fillColor: [248, 250, 252]
+                },
+                columnStyles: {
+                    0: { cellWidth: 65 },
+                    1: { cellWidth: 95 },
+                    2: { cellWidth: 145 },
+                    3: { cellWidth: 70 },
+                    4: { cellWidth: 70 },
+                    5: { cellWidth: 70, halign: 'right', fontStyle: 'bold' }
+                },
+                didDrawPage: function () {
+                    const str = 'Page ' + doc.internal.getNumberOfPages();
+                    doc.setFontSize(8);
+                    doc.setTextColor(148, 163, 184);
+                    doc.text(str, 595.28 - 40, 841.89 - 25, { align: 'right' });
+                    doc.text('Money Ledger • Automated Personal Financial Statement', 40, 841.89 - 25);
+                }
+            });
+        }
+
+        const cleanName = person.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const filename = `MoneyLedger_Statement_${cleanName}_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(filename);
+        showToast(`Downloaded PDF statement for ${person.name}`, 'success');
+    } catch (e) {
+        console.error('PDF generation error:', e);
+        showToast('Failed to generate PDF statement: ' + e.message, 'error');
+    }
+}
+
+function downloadTransactionsPDF() {
+    const filtered = getFilteredTransactions();
+    if (!filtered.length) {
+        showToast('No transactions match the current filter to export', 'error');
+        return;
+    }
+
+    if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+        showToast('Loading PDF generator... please retry in a moment', 'info');
+        return;
+    }
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'pt',
+            format: 'a4'
+        });
+
+        const currency = state.settings.currency.trim();
+        const generatedDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        let totalIn = 0;
+        let totalOut = 0;
+        filtered.forEach(t => {
+            if (t.type === 'in') totalIn += t.amount;
+            if (t.type === 'out') totalOut += t.amount;
+        });
+        const netFlow = totalIn - totalOut;
+
+        // Header Banner
+        doc.setFillColor(37, 99, 235);
+        doc.rect(0, 0, 595.28, 65, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text('MONEY LEDGER', 40, 32);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9.5);
+        doc.text('FINANCIAL TRANSACTIONS JOURNAL STATEMENT', 40, 48);
+
+        doc.setFontSize(8.5);
+        doc.text(`Generated: ${generatedDate}`, 555.28 - 40, 40, { align: 'right' });
+
+        // Summary Box
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(40, 85, 515.28, 48, 6, 6, 'FD');
+
+        const colWidth = 515.28 / 4;
+        
+        doc.setFontSize(7.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text('MATCHING ENTRIES', 40 + 12, 102);
+        doc.setFontSize(10.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(15, 23, 42);
+        doc.text(`${filtered.length} transactions`, 40 + 12, 120);
+
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 116, 139);
+        doc.text('TOTAL INFLOW', 40 + colWidth + 8, 102);
+        doc.setFontSize(10.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(16, 185, 129);
+        doc.text(`+${currency} ${totalIn.toLocaleString()}`, 40 + colWidth + 8, 120);
+
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 116, 139);
+        doc.text('TOTAL OUTFLOW', 40 + colWidth * 2 + 8, 102);
+        doc.setFontSize(10.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(239, 68, 68);
+        doc.text(`-${currency} ${totalOut.toLocaleString()}`, 40 + colWidth * 2 + 8, 120);
+
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 116, 139);
+        doc.text('NET CASH FLOW', 40 + colWidth * 3 + 8, 102);
+        doc.setFontSize(10.5);
+        doc.setFont('helvetica', 'bold');
+        if (netFlow >= 0) {
+            doc.setTextColor(16, 185, 129);
+        } else {
+            doc.setTextColor(239, 68, 68);
+        }
+        doc.text(`${netFlow >= 0 ? '+' : ''}${currency} ${netFlow.toLocaleString()}`, 40 + colWidth * 3 + 8, 120);
+
+        const tableRows = filtered.map(t => {
+            const cat = state.categories.find(c => c.id === t.category);
+            const person = state.people.find(p => p.id === t.personId);
+            const toPerson = state.people.find(p => p.id === t.toPersonId);
+            const acc = state.accounts.find(a => a.id === t.accountId);
+            const toAcc = state.accounts.find(a => a.id === t.toAccountId);
+
+            let typeLabel = 'Income';
+            let amountPrefix = '+';
+            let personName = person ? person.name : '—';
+            let accountName = acc ? acc.name : '—';
+
+            if (t.type === 'out') {
+                typeLabel = 'Expense';
+                amountPrefix = '-';
+            } else if (t.type === 'transfer_account') {
+                typeLabel = 'Bank Transfer';
+                amountPrefix = '';
+                accountName = `${acc ? acc.name : '?'} → ${toAcc ? toAcc.name : '?'}`;
+                personName = '—';
+            } else if (t.type === 'transfer_person') {
+                typeLabel = 'Ownership Transfer';
+                amountPrefix = '';
+                personName = `${person ? person.name : '?'} → ${toPerson ? toPerson.name : '?'}`;
+                accountName = '—';
+            }
+
+            return [
+                t.date || '—',
+                typeLabel,
+                t.desc + (t.notes ? ` (${t.notes})` : ''),
+                cat ? cat.name : 'General',
+                personName,
+                accountName,
+                `${amountPrefix}${currency} ${t.amount.toLocaleString()}`
+            ];
+        });
+
+        if (doc.autoTable) {
+            doc.autoTable({
+                head: [['Date', 'Type', 'Description', 'Category', 'Person', 'Account', 'Amount']],
+                body: tableRows,
+                startY: 148,
+                theme: 'striped',
+                headStyles: {
+                    fillColor: [37, 99, 235],
+                    textColor: 255,
+                    fontStyle: 'bold',
+                    fontSize: 8.5
+                },
+                bodyStyles: {
+                    fontSize: 8,
+                    textColor: [30, 41, 59]
+                },
+                alternateRowStyles: {
+                    fillColor: [248, 250, 252]
+                },
+                columnStyles: {
+                    0: { cellWidth: 55 },
+                    1: { cellWidth: 70 },
+                    2: { cellWidth: 125 },
+                    3: { cellWidth: 65 },
+                    4: { cellWidth: 70 },
+                    5: { cellWidth: 65 },
+                    6: { cellWidth: 65, halign: 'right', fontStyle: 'bold' }
+                },
+                didDrawPage: function () {
+                    const str = 'Page ' + doc.internal.getNumberOfPages();
+                    doc.setFontSize(8);
+                    doc.setTextColor(148, 163, 184);
+                    doc.text(str, 595.28 - 40, 841.89 - 25, { align: 'right' });
+                    doc.text('Money Ledger • Financial Transactions Journal', 40, 841.89 - 25);
+                }
+            });
+        }
+
+        const filename = `MoneyLedger_Statement_Filtered_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(filename);
+        showToast('PDF Journal exported successfully', 'success');
+    } catch (e) {
+        console.error('PDF generation error:', e);
+        showToast('Failed to generate PDF: ' + e.message, 'error');
+    }
+}
+
+// Person Activity Modal Handlers
+function openPersonActivityModal(personId) {
+    const person = state.people.find(p => p.id === personId);
+    if (!person) {
+        showToast('Person not found', 'error');
+        return;
+    }
+
+    currentActivePersonId = personId;
+
+    // Set Avatar & Info
+    const avatarEl = document.getElementById('activity-modal-avatar');
+    const nameEl = document.getElementById('activity-modal-name');
+    const notesEl = document.getElementById('activity-modal-notes');
+    const balanceEl = document.getElementById('activity-modal-balance-badge');
+
+    if (avatarEl) {
+        avatarEl.style.background = person.color || '#0f172a';
+        avatarEl.innerText = person.name ? person.name.charAt(0).toUpperCase() : '?';
+    }
+    if (nameEl) nameEl.innerText = person.name;
+    if (notesEl) notesEl.innerText = person.notes ? person.notes : 'Ledger Owner';
+    if (balanceEl) {
+        balanceEl.innerText = formatCurrency(person.balance);
+        balanceEl.className = `badge-balance font-mono ${person.balance < 0 ? 'text-danger' : 'text-success'}`;
+    }
+
+    // Calculate Person Financial Activity Stats
+    const personTx = state.transactions.filter(t => t.personId === personId || t.toPersonId === personId);
+    let totalIn = 0;
+    let totalOut = 0;
+    let totalTransfers = 0;
+
+    personTx.forEach(t => {
+        if (t.type === 'in' && t.personId === personId) totalIn += t.amount;
+        else if (t.type === 'out' && t.personId === personId) totalOut += t.amount;
+        else if (t.type === 'transfer_person') {
+            if (t.personId === personId) totalTransfers -= t.amount;
+            if (t.toPersonId === personId) totalTransfers += t.amount;
+        }
+    });
+
+    const inflowEl = document.getElementById('activity-modal-inflow');
+    const outflowEl = document.getElementById('activity-modal-outflow');
+    const transfersEl = document.getElementById('activity-modal-transfers');
+    const countEl = document.getElementById('activity-modal-count');
+
+    if (inflowEl) inflowEl.innerText = `+${formatCurrency(totalIn)}`;
+    if (outflowEl) outflowEl.innerText = `-${formatCurrency(totalOut)}`;
+    if (transfersEl) {
+        transfersEl.innerText = `${totalTransfers >= 0 ? '+' : ''}${formatCurrency(totalTransfers)}`;
+        transfersEl.className = `activity-stat-val font-mono ${totalTransfers >= 0 ? 'text-success' : 'text-danger'}`;
+    }
+    if (countEl) countEl.innerText = personTx.length;
+
+    // Render Table Rows
+    const tbody = document.getElementById('activity-modal-tbody');
+    if (tbody) {
+        if (!personTx.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-8 text-secondary">
+                        <div style="font-size: 24px; margin-bottom: 6px;">📝</div>
+                        No transaction activity recorded for ${escapeHtml(person.name)} yet.
+                    </td>
+                </tr>
+            `;
+        } else {
+            tbody.innerHTML = personTx.map(t => {
+                const cat = state.categories.find(c => c.id === t.category) || { name: 'General', icon: '💳' };
+                const acc = state.accounts.find(a => a.id === t.accountId);
+                const otherPerson = t.type === 'transfer_person'
+                    ? (t.personId === personId ? state.people.find(p => p.id === t.toPersonId) : state.people.find(p => p.id === t.personId))
+                    : null;
+
+                let typeBadge = '<span class="badge-tag in">Income</span>';
+                let amountHtml = `<span class="amount-in font-mono">+${formatCurrency(t.amount)}</span>`;
+                let accountLabel = acc ? escapeHtml(acc.name) : '—';
+
+                if (t.type === 'out') {
+                    typeBadge = '<span class="badge-tag out">Expense</span>';
+                    amountHtml = `<span class="amount-out font-mono">-${formatCurrency(t.amount)}</span>`;
+                } else if (t.type === 'transfer_person') {
+                    const isSender = t.personId === personId;
+                    typeBadge = isSender ? '<span class="badge-tag settle">Sent Transfer</span>' : '<span class="badge-tag in">Received Transfer</span>';
+                    amountHtml = isSender ? `<span class="amount-out font-mono">-${formatCurrency(t.amount)}</span>` : `<span class="amount-in font-mono">+${formatCurrency(t.amount)}</span>`;
+                    accountLabel = isSender ? `To: ${otherPerson ? otherPerson.name : '?'}` : `From: ${otherPerson ? otherPerson.name : '?'}`;
+                } else if (t.type === 'transfer_account') {
+                    typeBadge = '<span class="badge-tag transfer">Transfer</span>';
+                    amountHtml = `<span class="amount-transfer font-mono">${formatCurrency(t.amount)}</span>`;
+                }
+
+                return `
+                    <tr>
+                        <td class="font-mono text-sm">${t.date || '—'}</td>
+                        <td>${typeBadge}</td>
+                        <td>
+                            <div class="font-bold">${escapeHtml(t.desc)}</div>
+                            ${t.notes ? `<div class="text-muted text-xs">${escapeHtml(t.notes)}</div>` : ''}
+                        </td>
+                        <td><span class="category-chip">${cat.icon} ${escapeHtml(cat.name)}</span></td>
+                        <td><span class="account-type-pill">${accountLabel}</span></td>
+                        <td class="text-right">${amountHtml}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    }
+
+    const modal = document.getElementById('person-activity-modal');
+    if (modal) modal.classList.add('active');
+}
+
+function downloadActivePersonPDF() {
+    if (currentActivePersonId) {
+        downloadPersonPDF(currentActivePersonId);
+    }
+}
+
+function settleActivePersonFromModal() {
+    if (currentActivePersonId) {
+        const id = currentActivePersonId;
+        closeModal('person-activity-modal');
+        openSettleModal(id);
+    }
+}
+
+function filterActivePersonInTable() {
+    if (currentActivePersonId) {
+        const id = currentActivePersonId;
+        closeModal('person-activity-modal');
+        filterByPerson(id);
+    }
 }
 
 // ============================================================================
@@ -1448,7 +2266,10 @@ function renderPeopleManagement() {
                         </div>
                     </div>
                     <div class="account-card-actions">
-                        <button class="btn btn-sm btn-ghost" onclick="filterByPerson('${person.id}')">Activity</button>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn btn-sm btn-ghost" onclick="openPersonActivityModal('${person.id}')" title="View Full Activity & Statement">📊 Activity</button>
+                            <button class="btn btn-sm btn-outline" onclick="downloadPersonPDF('${person.id}')" title="Download PDF Statement">📄 Statement</button>
+                        </div>
                         <div style="display:flex; gap:6px;">
                             <button class="btn btn-sm btn-outline" onclick="openSettleModal('${person.id}')">Settle</button>
                             <button class="btn btn-sm btn-secondary" onclick="openPersonModal('${person.id}')">Edit</button>
@@ -1671,21 +2492,29 @@ function updateSettings() {
 }
 
 function initTheme() {
-    const savedTheme = state.settings.theme || 'system';
+    let savedTheme = localStorage.getItem('moneyLedger_theme');
+    if (!savedTheme) {
+        savedTheme = state.settings.theme || 'system';
+    }
+    state.settings.theme = savedTheme;
     applyTheme(savedTheme);
 }
 
 function applyTheme(theme) {
     const html = document.documentElement;
-    if (theme === 'dark') {
-        html.setAttribute('data-theme', 'dark');
-    } else if (theme === 'light') {
-        html.setAttribute('data-theme', 'light');
-    } else {
-        // System preference
+    let effectiveTheme = theme;
+    if (theme === 'system') {
         const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+        effectiveTheme = prefersDark ? 'dark' : 'light';
     }
+
+    html.setAttribute('data-theme', effectiveTheme);
+    try {
+        localStorage.setItem('moneyLedger_theme', theme);
+    } catch (e) {}
+
+    const select = document.getElementById('setting-theme');
+    if (select) select.value = theme;
 }
 
 function toggleTheme() {
@@ -1946,6 +2775,7 @@ async function fetchFromCloud() {
         const result = await res.json();
 
         if (result.success && result.exists && result.data) {
+            const activeTheme = localStorage.getItem('moneyLedger_theme') || state.settings.theme || 'light';
             // Cloud has existing data
             state = {
                 ...INITIAL_STATE,
@@ -1956,6 +2786,10 @@ async function fetchFromCloud() {
                 categories: result.data.categories && result.data.categories.length ? result.data.categories : DEFAULT_CATEGORIES,
                 settings: { ...INITIAL_STATE.settings, ...(result.data.settings || {}) }
             };
+            if (activeTheme) {
+                state.settings.theme = activeTheme;
+            }
+            applyTheme(state.settings.theme);
             cloudState.lastSyncedAt = result.lastSyncedAt || new Date().toISOString();
             saveState(); // Update local cache
             renderApp();
