@@ -1230,88 +1230,121 @@
     <!-- 5. Person Activity & Statement Modal -->
     <div id="person-activity-modal" class="modal-overlay" onclick="handleModalBackdropClick(event, 'person-activity-modal')">
         <div class="modal-card modal-lg activity-modal-card">
-            <div class="modal-header">
+            
+            <!-- Modern Activity Header -->
+            <div class="activity-modal-header">
                 <div class="activity-modal-profile">
-                    <div id="activity-modal-avatar" class="person-avatar-circle" style="background:#0f172a;">?</div>
-                    <div>
+                    <div id="activity-modal-avatar" class="activity-avatar-circle">?</div>
+                    <div class="activity-profile-details">
                         <div class="activity-modal-title-row">
                             <h2 id="activity-modal-name">Person Name</h2>
                             <span id="activity-modal-balance-badge" class="badge-balance font-mono">Rs. 0</span>
                         </div>
-                        <p id="activity-modal-notes" class="text-secondary text-sm">Ledger Owner</p>
+                        <p id="activity-modal-notes" class="activity-notes-text">Ledger Owner</p>
                     </div>
                 </div>
-                <button class="modal-close-btn" onclick="closeModal('person-activity-modal')">&times;</button>
+                <button class="activity-modal-close" onclick="closeModal('person-activity-modal')" aria-label="Close modal">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
 
-            <!-- Person Financial Stats Grid -->
+            <!-- Person Financial Stats Strip (Compact 4-metric layout) -->
             <div class="activity-stats-grid">
-                <div class="activity-stat-card">
-                    <span class="label-caps">Total Inflow / Earned</span>
+                <div class="activity-stat-card stat-inflow">
+                    <div class="stat-icon-label">
+                        <span class="stat-dot in"></span>
+                        <span class="label-caps">Inflow</span>
+                    </div>
                     <div id="activity-modal-inflow" class="activity-stat-val text-success font-mono">+Rs. 0</div>
                 </div>
-                <div class="activity-stat-card">
-                    <span class="label-caps">Total Outflow / Spent</span>
+                <div class="activity-stat-card stat-outflow">
+                    <div class="stat-icon-label">
+                        <span class="stat-dot out"></span>
+                        <span class="label-caps">Outflow</span>
+                    </div>
                     <div id="activity-modal-outflow" class="activity-stat-val text-danger font-mono">-Rs. 0</div>
                 </div>
-                <div class="activity-stat-card">
-                    <span class="label-caps">Transfers / Settle</span>
-                    <div id="activity-modal-transfers" class="activity-stat-val text-primary font-mono">Rs. 0</div>
+                <div class="activity-stat-card stat-transfers">
+                    <div class="stat-icon-label">
+                        <span class="stat-dot transfer"></span>
+                        <span class="label-caps">Transfers / Settle</span>
+                    </div>
+                    <div id="activity-modal-transfers" class="activity-stat-val font-mono">Rs. 0</div>
                 </div>
-                <div class="activity-stat-card">
-                    <span class="label-caps">Total Activities</span>
+                <div class="activity-stat-card stat-count">
+                    <div class="stat-icon-label">
+                        <span class="stat-dot count"></span>
+                        <span class="label-caps">Activities</span>
+                    </div>
                     <div id="activity-modal-count" class="activity-stat-val font-mono">0</div>
                 </div>
             </div>
 
-            <!-- Action Toolbar -->
+            <!-- Action Toolbar & Interactive Type Filters -->
             <div class="activity-modal-toolbar">
-                <div class="toolbar-left">
-                    <button id="activity-modal-pdf-btn" class="btn btn-primary" onclick="downloadActivePersonPDF()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div class="toolbar-actions">
+                    <button id="activity-modal-settle-btn" class="btn btn-primary btn-sm" onclick="settleActivePersonFromModal()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <polyline points="16 11 18 13 22 9"></polyline>
+                        </svg>
+                        <span>Settle</span>
+                    </button>
+                    <button id="activity-modal-pdf-btn" class="btn btn-soft btn-sm" onclick="downloadActivePersonPDF()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                             <line x1="16" y1="13" x2="8" y2="13"></line>
                             <line x1="16" y1="17" x2="8" y2="17"></line>
                         </svg>
-                        <span>Download Statement (PDF)</span>
-                    </button>
-                    <button id="activity-modal-settle-btn" class="btn btn-outline" onclick="settleActivePersonFromModal()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <polyline points="16 11 18 13 22 9"></polyline>
-                        </svg>
-                        <span>Settle Balance</span>
+                        <span>PDF Statement</span>
                     </button>
                 </div>
-                <button id="activity-modal-filter-btn" class="btn btn-ghost btn-sm" onclick="filterActivePersonInTable()">
-                    <span>View in Main Table &rarr;</span>
+                <div class="toolbar-filters">
+                    <button class="activity-filter-btn active" id="act-filter-all" onclick="filterPersonActivityType('all')">All</button>
+                    <button class="activity-filter-btn" id="act-filter-in" onclick="filterPersonActivityType('in')">Inflow</button>
+                    <button class="activity-filter-btn" id="act-filter-out" onclick="filterPersonActivityType('out')">Outflow</button>
+                    <button class="activity-filter-btn" id="act-filter-transfer" onclick="filterPersonActivityType('transfer')">Transfers</button>
+                </div>
+            </div>
+
+            <!-- Content Area: Desktop Table & Mobile Feed -->
+            <div class="activity-content-scroll">
+                <!-- Desktop Ledger Table (visible on screens >= 680px) -->
+                <div class="activity-desktop-table">
+                    <table class="ledger-table">
+                        <thead>
+                            <tr>
+                                <th class="col-date">Date</th>
+                                <th class="col-type">Type</th>
+                                <th class="col-desc">Description</th>
+                                <th class="col-cat">Category</th>
+                                <th class="col-acc">Account / Wallet</th>
+                                <th class="col-amount text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activity-modal-tbody">
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Activity Card Feed (visible on screens < 680px) -->
+                <div class="activity-mobile-feed" id="activity-modal-mobile-feed">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="activity-modal-footer">
+                <button id="activity-modal-filter-btn" class="activity-footer-link" onclick="filterActivePersonInTable()">
+                    <span>View in Full Ledger &rarr;</span>
                 </button>
-            </div>
-
-            <!-- Person Activity Timeline Table -->
-            <div class="activity-table-wrapper">
-                <table class="ledger-table">
-                    <thead>
-                        <tr>
-                            <th class="col-date">Date</th>
-                            <th class="col-type">Type</th>
-                            <th class="col-desc">Description</th>
-                            <th class="col-cat">Category</th>
-                            <th class="col-acc">Account / Wallet</th>
-                            <th class="col-amount text-right">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody id="activity-modal-tbody">
-                        <!-- Injected via JS -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="modal-actions justify-between">
-                <span class="text-muted text-xs">Complete chronological ledger audit trail</span>
-                <button type="button" class="btn btn-ghost" onclick="closeModal('person-activity-modal')">Close</button>
+                <button type="button" class="btn btn-soft btn-sm" onclick="closeModal('person-activity-modal')">Close</button>
             </div>
         </div>
     </div>

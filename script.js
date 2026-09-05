@@ -2034,6 +2034,9 @@ function downloadTransactionsPDF() {
 }
 
 // Person Activity Modal Handlers
+let currentPersonActivityFilter = 'all';
+let currentActivePersonTx = [];
+
 function openPersonActivityModal(personId) {
     const person = state.people.find(p => p.id === personId);
     if (!person) {
@@ -2042,6 +2045,12 @@ function openPersonActivityModal(personId) {
     }
 
     currentActivePersonId = personId;
+    currentPersonActivityFilter = 'all';
+
+    // Reset filter buttons
+    document.querySelectorAll('.activity-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.id === 'act-filter-all');
+    });
 
     // Set Avatar & Info
     const avatarEl = document.getElementById('activity-modal-avatar');
@@ -2050,23 +2059,35 @@ function openPersonActivityModal(personId) {
     const balanceEl = document.getElementById('activity-modal-balance-badge');
 
     if (avatarEl) {
-        avatarEl.style.background = person.color || '#0f172a';
+        avatarEl.style.background = person.color || '#2563eb';
         avatarEl.innerText = person.name ? person.name.charAt(0).toUpperCase() : '?';
     }
     if (nameEl) nameEl.innerText = person.name;
-    if (notesEl) notesEl.innerText = person.notes ? person.notes : 'Ledger Owner';
+    if (notesEl) notesEl.innerText = person.notes ? person.notes : (person.isPrimary ? 'Primary Ledger Owner' : 'Ledger Member');
+    
     if (balanceEl) {
-        balanceEl.innerText = formatCurrency(person.balance);
-        balanceEl.className = `badge-balance font-mono ${person.balance < 0 ? 'text-danger' : 'text-success'}`;
+        let balanceLabel = formatCurrency(person.balance);
+        let balanceClass = 'badge-balance font-mono';
+        if (person.balance > 0) {
+            balanceClass += ' text-success';
+            balanceLabel = `+${balanceLabel} (Owes You)`;
+        } else if (person.balance < 0) {
+            balanceClass += ' text-danger';
+            balanceLabel = `${balanceLabel} (You Owe)`;
+        } else {
+            balanceLabel = `${balanceLabel} (Settled)`;
+        }
+        balanceEl.innerText = balanceLabel;
+        balanceEl.className = balanceClass;
     }
 
     // Calculate Person Financial Activity Stats
-    const personTx = state.transactions.filter(t => t.personId === personId || t.toPersonId === personId);
+    currentActivePersonTx = state.transactions.filter(t => t.personId === personId || t.toPersonId === personId);
     let totalIn = 0;
     let totalOut = 0;
     let totalTransfers = 0;
 
-    personTx.forEach(t => {
+    currentActivePersonTx.forEach(t => {
         if (t.type === 'in' && t.personId === personId) totalIn += t.amount;
         else if (t.type === 'out' && t.personId === personId) totalOut += t.amount;
         else if (t.type === 'transfer_person') {
@@ -2086,64 +2107,152 @@ function openPersonActivityModal(personId) {
         transfersEl.innerText = `${totalTransfers >= 0 ? '+' : ''}${formatCurrency(totalTransfers)}`;
         transfersEl.className = `activity-stat-val font-mono ${totalTransfers >= 0 ? 'text-success' : 'text-danger'}`;
     }
-    if (countEl) countEl.innerText = personTx.length;
+    if (countEl) countEl.innerText = `${currentActivePersonTx.length}`;
 
-    // Render Table Rows
-    const tbody = document.getElementById('activity-modal-tbody');
-    if (tbody) {
-        if (!personTx.length) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center py-8 text-secondary">
-                        <div style="font-size: 24px; margin-bottom: 6px;">📝</div>
-                        No transaction activity recorded for ${escapeHtml(person.name)} yet.
-                    </td>
-                </tr>
-            `;
-        } else {
-            tbody.innerHTML = personTx.map(t => {
-                const cat = state.categories.find(c => c.id === t.category) || { name: 'General', icon: '💳' };
-                const acc = state.accounts.find(a => a.id === t.accountId);
-                const otherPerson = t.type === 'transfer_person'
-                    ? (t.personId === personId ? state.people.find(p => p.id === t.toPersonId) : state.people.find(p => p.id === t.personId))
-                    : null;
-
-                let typeBadge = '<span class="badge-tag in">Income</span>';
-                let amountHtml = `<span class="amount-in font-mono">+${formatCurrency(t.amount)}</span>`;
-                let accountLabel = acc ? escapeHtml(acc.name) : '—';
-
-                if (t.type === 'out') {
-                    typeBadge = '<span class="badge-tag out">Expense</span>';
-                    amountHtml = `<span class="amount-out font-mono">-${formatCurrency(t.amount)}</span>`;
-                } else if (t.type === 'transfer_person') {
-                    const isSender = t.personId === personId;
-                    typeBadge = isSender ? '<span class="badge-tag settle">Sent Transfer</span>' : '<span class="badge-tag in">Received Transfer</span>';
-                    amountHtml = isSender ? `<span class="amount-out font-mono">-${formatCurrency(t.amount)}</span>` : `<span class="amount-in font-mono">+${formatCurrency(t.amount)}</span>`;
-                    accountLabel = isSender ? `To: ${otherPerson ? otherPerson.name : '?'}` : `From: ${otherPerson ? otherPerson.name : '?'}`;
-                } else if (t.type === 'transfer_account') {
-                    typeBadge = '<span class="badge-tag transfer">Transfer</span>';
-                    amountHtml = `<span class="amount-transfer font-mono">${formatCurrency(t.amount)}</span>`;
-                }
-
-                return `
-                    <tr>
-                        <td class="col-date font-mono">${t.date || '—'}</td>
-                        <td class="col-type">${typeBadge}</td>
-                        <td class="col-desc">
-                            <div class="desc-title">${escapeHtml(t.desc)}</div>
-                            ${t.notes ? `<div class="desc-notes">${escapeHtml(t.notes)}</div>` : ''}
-                        </td>
-                        <td class="col-cat"><span class="category-chip">${cat.icon} ${escapeHtml(cat.name)}</span></td>
-                        <td class="col-acc"><span class="account-type-pill">${accountLabel}</span></td>
-                        <td class="col-amount">${amountHtml}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
-    }
+    // Render list for filter
+    renderPersonActivityItems(person, currentPersonActivityFilter);
 
     const modal = document.getElementById('person-activity-modal');
     if (modal) modal.classList.add('active');
+}
+
+function filterPersonActivityType(type) {
+    currentPersonActivityFilter = type;
+    document.querySelectorAll('.activity-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.id === `act-filter-${type}`);
+    });
+    const person = state.people.find(p => p.id === currentActivePersonId);
+    if (person) {
+        renderPersonActivityItems(person, type);
+    }
+}
+
+function renderPersonActivityItems(person, filterType) {
+    const personId = person.id;
+    let filteredTx = currentActivePersonTx;
+
+    if (filterType === 'in') {
+        filteredTx = currentActivePersonTx.filter(t => t.type === 'in' || (t.type === 'transfer_person' && t.toPersonId === personId));
+    } else if (filterType === 'out') {
+        filteredTx = currentActivePersonTx.filter(t => t.type === 'out' || (t.type === 'transfer_person' && t.personId === personId));
+    } else if (filterType === 'transfer') {
+        filteredTx = currentActivePersonTx.filter(t => t.type === 'transfer_person' || t.type === 'transfer_account');
+    }
+
+    const tbody = document.getElementById('activity-modal-tbody');
+    const mobileFeed = document.getElementById('activity-modal-mobile-feed');
+
+    if (!filteredTx.length) {
+        const emptyHtml = `
+            <div class="activity-empty-state">
+                <div class="activity-empty-icon">📝</div>
+                <div>No transactions found for this filter.</div>
+            </div>
+        `;
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="6">${emptyHtml}</td></tr>`;
+        }
+        if (mobileFeed) {
+            mobileFeed.innerHTML = emptyHtml;
+        }
+        return;
+    }
+
+    // 1. Render Desktop Table
+    if (tbody) {
+        tbody.innerHTML = filteredTx.map(t => {
+            const cat = state.categories.find(c => c.id === t.category) || { name: 'General', icon: '💳' };
+            const acc = state.accounts.find(a => a.id === t.accountId);
+            const otherPerson = t.type === 'transfer_person'
+                ? (t.personId === personId ? state.people.find(p => p.id === t.toPersonId) : state.people.find(p => p.id === t.personId))
+                : null;
+
+            let typeBadge = '<span class="badge-tag in">Income</span>';
+            let amountHtml = `<span class="amount-in font-mono">+${formatCurrency(t.amount)}</span>`;
+            let accountLabel = acc ? escapeHtml(acc.name) : '—';
+
+            if (t.type === 'out') {
+                typeBadge = '<span class="badge-tag out">Expense</span>';
+                amountHtml = `<span class="amount-out font-mono">-${formatCurrency(t.amount)}</span>`;
+            } else if (t.type === 'transfer_person') {
+                const isSender = t.personId === personId;
+                typeBadge = isSender ? '<span class="badge-tag settle">Sent Transfer</span>' : '<span class="badge-tag in">Received Transfer</span>';
+                amountHtml = isSender ? `<span class="amount-out font-mono">-${formatCurrency(t.amount)}</span>` : `<span class="amount-in font-mono">+${formatCurrency(t.amount)}</span>`;
+                accountLabel = isSender ? `To: ${otherPerson ? otherPerson.name : '?'}` : `From: ${otherPerson ? otherPerson.name : '?'}`;
+            } else if (t.type === 'transfer_account') {
+                typeBadge = '<span class="badge-tag transfer">Transfer</span>';
+                amountHtml = `<span class="amount-transfer font-mono">${formatCurrency(t.amount)}</span>`;
+            }
+
+            return `
+                <tr>
+                    <td class="col-date font-mono">${t.date || '—'}</td>
+                    <td class="col-type">${typeBadge}</td>
+                    <td class="col-desc">
+                        <div class="desc-title">${escapeHtml(t.desc || 'Transaction')}</div>
+                        ${t.notes ? `<div class="desc-notes">${escapeHtml(t.notes)}</div>` : ''}
+                    </td>
+                    <td class="col-cat"><span class="category-chip">${cat.icon} ${escapeHtml(cat.name)}</span></td>
+                    <td class="col-acc"><span class="account-type-pill">${escapeHtml(accountLabel)}</span></td>
+                    <td class="col-amount">${amountHtml}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // 2. Render Mobile Feed Cards
+    if (mobileFeed) {
+        mobileFeed.innerHTML = filteredTx.map(t => {
+            const cat = state.categories.find(c => c.id === t.category) || { name: 'General', icon: '💳' };
+            const acc = state.accounts.find(a => a.id === t.accountId);
+            const otherPerson = t.type === 'transfer_person'
+                ? (t.personId === personId ? state.people.find(p => p.id === t.toPersonId) : state.people.find(p => p.id === t.personId))
+                : null;
+
+            let iconClass = 'in';
+            let iconGlyph = '↗';
+            let amountHtml = `<span class="activity-feed-amount text-success font-mono">+${formatCurrency(t.amount)}</span>`;
+            let subMeta = `${t.date || '—'} • ${cat.icon} ${escapeHtml(cat.name)}`;
+            let typePill = '<span class="badge-tag in">Income</span>';
+
+            if (t.type === 'out') {
+                iconClass = 'out';
+                iconGlyph = '↘';
+                amountHtml = `<span class="activity-feed-amount text-danger font-mono">-${formatCurrency(t.amount)}</span>`;
+                typePill = '<span class="badge-tag out">Expense</span>';
+            } else if (t.type === 'transfer_person') {
+                const isSender = t.personId === personId;
+                iconClass = isSender ? 'out' : 'transfer';
+                iconGlyph = '⇄';
+                amountHtml = isSender 
+                    ? `<span class="activity-feed-amount text-danger font-mono">-${formatCurrency(t.amount)}</span>` 
+                    : `<span class="activity-feed-amount text-success font-mono">+${formatCurrency(t.amount)}</span>`;
+                typePill = isSender ? '<span class="badge-tag settle">Sent</span>' : '<span class="badge-tag in">Received</span>';
+                const targetName = otherPerson ? otherPerson.name : 'Unknown';
+                subMeta = `${t.date || '—'} • ${isSender ? 'To: ' + targetName : 'From: ' + targetName}`;
+            }
+
+            if (acc) {
+                subMeta += ` • ${escapeHtml(acc.name)}`;
+            }
+
+            return `
+                <div class="activity-feed-card">
+                    <div class="activity-feed-left">
+                        <div class="activity-feed-icon ${iconClass}">${iconGlyph}</div>
+                        <div class="activity-feed-info">
+                            <div class="activity-feed-title">${escapeHtml(t.desc || 'Transaction')}</div>
+                            <div class="activity-feed-sub">${subMeta}</div>
+                        </div>
+                    </div>
+                    <div class="activity-feed-right">
+                        ${amountHtml}
+                        ${typePill}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
 }
 
 function downloadActivePersonPDF() {
