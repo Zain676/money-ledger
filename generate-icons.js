@@ -3,55 +3,32 @@ const path = require('path');
 const sharp = require('./node_modules/sharp');
 
 /**
- * Generates the Money Ledger brand icon SVG with exact brand colors & vectors
+ * Generates the Money Ledger brand icon SVG with exact brand colors & vectors.
+ * For mobile app icons (Android adaptive maskable, standard launcher, and iOS),
+ * the background gradient is full-bleed edge-to-edge so the operating system launcher
+ * (Samsung One UI, Google Pixel, iOS) applies its native squircle/rounded mask cleanly
+ * without any dark edges or double-corner artifacts.
+ *
  * @param {number} size - Output pixel dimension
- * @param {boolean} maskable - If true, adds 18% safe padding for Android adaptive maskable icons
+ * @param {boolean} maskable - If true, scales the central symbol into the 60% safe zone
  */
 function createSvg(size, maskable = false) {
-    if (maskable) {
-        // Android maskable icons require the graphic to be inside the central 80% circle
-        const pad = Math.round(size * 0.12);
-        const innerSize = size - pad * 2;
-        const radius = Math.round(innerSize * 0.25);
-        const scale = (innerSize / 24) * 0.58;
-        const strokeWidth = (2.5 / 24) * innerSize;
-        const center = size / 2;
+    // For maskable / mobile launcher icons, safe zone scale is ~50% of the canvas
+    const scaleFactor = maskable ? 0.50 : 0.52;
+    const scale = (size / 24) * scaleFactor;
+    const strokeWidth = (2.5 / 24) * size;
+    const center = size / 2;
 
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
-  <defs>
-    <linearGradient id="bgMask" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#2563eb"/>
-      <stop offset="100%" style="stop-color:#7c3aed"/>
-    </linearGradient>
-  </defs>
-  <!-- Full background for adaptive mask trimming -->
-  <rect width="${size}" height="${size}" fill="#0f172a"/>
-  <!-- Rounded gradient badge within safe zone -->
-  <rect x="${pad}" y="${pad}" width="${innerSize}" height="${innerSize}" rx="${radius}" ry="${radius}" fill="url(#bgMask)"/>
-  <!-- Dollar sign SVG path centered -->
-  <g transform="translate(${center},${center}) scale(${scale}) translate(-12,-12)">
-    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
-          fill="none"
-          stroke="#ffffff"
-          stroke-width="${strokeWidth / scale}"
-          stroke-linecap="round"
-          stroke-linejoin="round"/>
-  </g>
-</svg>`;
-    } else {
-        const radius = Math.round(size * 0.25);
-        const scale = (size / 24) * 0.58;
-        const strokeWidth = (2.5 / 24) * size;
-        const center = size / 2;
-
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#2563eb"/>
       <stop offset="100%" style="stop-color:#7c3aed"/>
     </linearGradient>
   </defs>
-  <rect width="${size}" height="${size}" rx="${radius}" ry="${radius}" fill="url(#bg)"/>
+  <!-- Edge-to-edge full-bleed gradient: OS launcher masks the squircle cleanly -->
+  <rect width="${size}" height="${size}" fill="url(#bg)"/>
+  <!-- Centered Dollar sign vector within safe zone -->
   <g transform="translate(${center},${center}) scale(${scale}) translate(-12,-12)">
     <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
           fill="none"
@@ -61,7 +38,6 @@ function createSvg(size, maskable = false) {
           stroke-linejoin="round"/>
   </g>
 </svg>`;
-    }
 }
 
 async function buildIcons() {
