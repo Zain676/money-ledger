@@ -576,6 +576,31 @@ a {
     background: #dc2626;
 }
 
+.btn-primary-soft {
+    background: rgba(37, 99, 235, 0.12);
+    color: #2563eb;
+    border: 1px solid rgba(37, 99, 235, 0.25);
+    font-weight: 600;
+}
+
+.btn-primary-soft:hover {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+[data-theme="dark"] .btn-primary-soft {
+    background: rgba(59, 130, 246, 0.16);
+    color: #60a5fa;
+    border-color: rgba(59, 130, 246, 0.32);
+}
+
+[data-theme="dark"] .btn-primary-soft:hover {
+    background: var(--accent-primary);
+    color: white;
+}
+
 .btn:active {
     transform: scale(0.98);
 }
@@ -752,26 +777,44 @@ a {
 /* 9. ACCOUNTS & WALLETS GRID */
 .accounts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
     gap: 20px;
 }
 
 .account-card {
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 20px;
+    border-radius: var(--radius-xl);
     position: relative;
-    transition: all var(--transition-fast);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
 }
 
 .account-card:hover {
-    border-color: var(--border-focus);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+.account-card-top-accent {
+    height: 4px;
+    width: 100%;
+    opacity: 0.85;
+    transition: opacity 0.2s, height 0.2s;
+}
+
+.account-card:hover .account-card-top-accent {
+    opacity: 1;
+    height: 5px;
+}
+
+.account-card-inner {
+    padding: 20px 22px 14px 22px;
+    flex: 1;
 }
 
 .account-card-header {
@@ -779,6 +822,24 @@ a {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 12px;
+}
+
+.account-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.account-card-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0.85;
+    transition: opacity 0.2s;
+}
+
+.account-card:hover .account-card-top-actions {
+    opacity: 1;
 }
 
 .account-type-pill {
@@ -790,6 +851,7 @@ a {
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    border: 1px solid var(--border-color);
 }
 
 .account-card-title {
@@ -798,28 +860,61 @@ a {
     color: var(--text-primary);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    min-width: 0;
+}
+
+.account-name-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .account-color-indicator {
-    width: 10px;
-    height: 10px;
-    border-radius: 3px;
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+    flex-shrink: 0;
 }
 
 .account-card-balance {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 800;
-    margin: 8px 0 16px 0;
+    margin: 4px 0 10px 0;
     letter-spacing: -0.5px;
+    line-height: 1.2;
 }
 
-.account-card-actions {
+.account-card-meta {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-top: 12px;
-    border-top: 1px solid var(--border-subtle);
+    gap: 8px;
+    font-size: 12px;
+}
+
+.account-tx-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--radius-full);
+    background: var(--bg-surface-subtle);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+.account-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 12px 18px 16px 18px;
+    border-top: 1px solid var(--border-color);
+    background: rgba(0, 0, 0, 0.015);
+}
+
+[data-theme="dark"] .account-card-actions {
+    background: rgba(255, 255, 255, 0.015);
 }
 
 /* 10. SPLIT DASHBOARD GRID & RECENT ACTIVITY */
@@ -1464,26 +1559,59 @@ a {
 /* 14. PEOPLE & OWNERSHIP VIEW */
 .people-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
     gap: 20px;
 }
 
 .person-card {
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 24px;
+    border-radius: var(--radius-xl);
     position: relative;
-    transition: all var(--transition-fast);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
 }
 
 .person-card:hover {
-    border-color: var(--border-focus);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+.person-card-top-accent {
+    height: 4px;
+    width: 100%;
+    opacity: 0.85;
+    transition: opacity 0.2s, height 0.2s;
+}
+
+.person-card:hover .person-card-top-accent {
+    opacity: 1;
+    height: 5px;
+}
+
+.person-card-inner {
+    padding: 20px 22px 14px 22px;
+    flex: 1;
+}
+
+.person-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.person-card-user {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
 }
 
 .person-avatar-circle {
@@ -1495,43 +1623,183 @@ a {
     justify-content: center;
     color: white;
     font-weight: 700;
-    font-size: 17px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    font-size: 18px;
+    flex-shrink: 0;
+    transition: transform 0.2s;
 }
 
-.person-card-header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 16px;
+.person-card:hover .person-avatar-circle {
+    transform: scale(1.06);
+}
+
+.person-title-box {
+    min-width: 0;
+    overflow: hidden;
 }
 
 .person-title-box h3 {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--text-primary);
+    margin: 0 0 3px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.person-title-box span {
-    font-size: 12px;
+.person-role-pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    background: var(--bg-surface-subtle);
     color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.person-card-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    opacity: 0.85;
+    transition: opacity 0.2s;
+}
+
+.person-card:hover .person-card-top-actions {
+    opacity: 1;
 }
 
 .person-balance-box {
-    margin: 12px 0 20px 0;
+    margin-top: 10px;
+}
+
+.person-balance-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.person-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.person-status-badge .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.person-status-badge.badge-credit {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.person-status-badge.badge-credit .status-dot {
+    background: #10b981;
+    box-shadow: 0 0 5px #10b981;
+}
+
+.person-status-badge.badge-debt {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.person-status-badge.badge-debt .status-dot {
+    background: #ef4444;
+    box-shadow: 0 0 5px #ef4444;
+}
+
+.person-status-badge.badge-neutral {
+    background: var(--bg-surface-subtle);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.person-status-badge.badge-neutral .status-dot {
+    background: var(--text-muted);
 }
 
 .person-balance-val {
     font-size: 26px;
     font-weight: 800;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.6px;
+    line-height: 1.2;
+    margin-bottom: 10px;
 }
 
-.person-pool-share {
-    font-size: 13px;
-    font-weight: 600;
+.text-success-bright {
+    color: #10b981;
+}
+
+.person-pool-progress-wrap {
+    margin-top: 10px;
+}
+
+.person-pool-progress-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--bg-surface-subtle);
+    overflow: hidden;
+    width: 100%;
+}
+
+.person-pool-progress-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+.person-pool-share-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
     color: var(--text-secondary);
-    margin-top: 4px;
+    margin-top: 6px;
+}
+
+.person-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    padding: 12px 16px 16px 16px;
+    border-top: 1px solid var(--border-color);
+    background: rgba(0, 0, 0, 0.015);
+}
+
+[data-theme="dark"] .person-card-actions {
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.card-action-btn {
+    width: 100%;
+    padding: 8px 6px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
 }
 
 /* 15. ANALYTICS VIEW & VISUAL CHARTS */

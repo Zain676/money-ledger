@@ -954,24 +954,33 @@ function renderOverview() {
                 </div>
             `;
         } else {
-            accountsGrid.innerHTML = state.accounts.map(acc => `
-                <div class="account-card">
-                    <div>
+            accountsGrid.innerHTML = state.accounts.map(acc => {
+                const color = acc.color || '#2563eb';
+                return `
+                <div class="account-card" style="--acc-theme:${color};">
+                    <div class="account-card-top-accent" style="background:${color};"></div>
+                    <div class="account-card-inner">
                         <div class="account-card-header">
                             <span class="account-card-title">
-                                <span class="account-color-indicator" style="background:${acc.color || '#2563eb'};"></span>
-                                ${escapeHtml(acc.name)}
+                                <span class="account-color-indicator" style="background:${color};"></span>
+                                <span class="account-name-text">${escapeHtml(acc.name)}</span>
                             </span>
                             <span class="account-type-pill">${escapeHtml(acc.type || 'Bank')}</span>
                         </div>
                         <div class="account-card-balance font-mono">${formatCurrency(acc.balance)}</div>
                     </div>
                     <div class="account-card-actions">
-                        <button class="btn btn-sm btn-ghost" onclick="filterByAccount('${acc.id}')">View Ledger</button>
-                        <button class="btn btn-sm btn-outline" onclick="openTransactionModal('transfer_account')">Transfer</button>
+                        <button class="btn btn-sm btn-ghost card-action-btn" onclick="filterByAccount('${acc.id}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span>Ledger</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline card-action-btn" onclick="openTransactionModal('transfer_account')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                            <span>Transfer</span>
+                        </button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
     }
 
@@ -2197,27 +2206,44 @@ function renderAccountsManagement() {
                 }
             });
 
+            const color = acc.color || '#2563eb';
+
             return `
-                <div class="account-card">
-                    <div>
+                <div class="account-card" style="--acc-theme:${color};">
+                    <div class="account-card-top-accent" style="background:${color};"></div>
+                    <div class="account-card-inner">
                         <div class="account-card-header">
                             <span class="account-card-title">
-                                <span class="account-color-indicator" style="background:${acc.color || '#2563eb'};"></span>
-                                ${escapeHtml(acc.name)}
+                                <span class="account-color-indicator" style="background:${color};"></span>
+                                <span class="account-name-text">${escapeHtml(acc.name)}</span>
                             </span>
-                            <span class="account-type-pill">${escapeHtml(acc.type || 'Bank')}</span>
+                            <div class="account-header-right">
+                                <span class="account-type-pill">${escapeHtml(acc.type || 'Bank')}</span>
+                                <div class="account-card-top-actions">
+                                    <button class="action-icon-btn" onclick="openAccountModal('${acc.id}')" title="Edit Account" aria-label="Edit ${escapeHtml(acc.name)}">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </button>
+                                    <button class="action-icon-btn delete" onclick="deleteAccount('${acc.id}')" title="Delete Account" aria-label="Delete ${escapeHtml(acc.name)}">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <div class="account-card-balance font-mono">${formatCurrency(acc.balance)}</div>
-                        <div class="text-secondary text-sm mb-4">
-                            ${acc.notes ? escapeHtml(acc.notes) : 'No notes'} • ${inCount + outCount} transactions
+                        <div class="account-card-meta text-secondary">
+                            <span>${acc.notes ? escapeHtml(acc.notes) : 'General Account'}</span>
+                            <span class="account-tx-badge">${inCount + outCount} txs</span>
                         </div>
                     </div>
                     <div class="account-card-actions">
-                        <button class="btn btn-sm btn-ghost" onclick="filterByAccount('${acc.id}')">History</button>
-                        <div style="display:flex; gap:6px;">
-                            <button class="btn btn-sm btn-secondary" onclick="openAccountModal('${acc.id}')">Edit</button>
-                            <button class="btn btn-sm btn-ghost text-danger" onclick="deleteAccount('${acc.id}')">Delete</button>
-                        </div>
+                        <button class="btn btn-sm btn-ghost card-action-btn" onclick="filterByAccount('${acc.id}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span>History</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline card-action-btn" onclick="openTransactionModal('transfer_account')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                            <span>Transfer</span>
+                        </button>
                     </div>
                 </div>
             `;
@@ -2246,35 +2272,72 @@ function renderPeopleManagement() {
         grid.innerHTML = state.people.map(person => {
             const pct = totalPool > 0 ? ((Math.max(0, person.balance) / totalPool) * 100).toFixed(1) : 0;
             const initial = person.name ? person.name.charAt(0).toUpperCase() : '?';
+            const isPositive = person.balance > 0;
+            const isNegative = person.balance < 0;
+            const statusText = isNegative ? 'Owes Pool' : (isPositive ? 'Pool Share' : 'Settled');
+            const statusClass = isNegative ? 'badge-debt' : (isPositive ? 'badge-credit' : 'badge-neutral');
+            const color = person.color || '#2563eb';
 
             return `
-                <div class="person-card">
-                    <div>
+                <div class="person-card" style="--person-theme:${color};">
+                    <div class="person-card-top-accent" style="background:${color};"></div>
+                    <div class="person-card-inner">
                         <div class="person-card-header">
-                            <div class="person-avatar-circle" style="background:${person.color || '#0f172a'};">
-                                ${initial}
+                            <div class="person-card-user">
+                                <div class="person-avatar-circle" style="background:${color}; box-shadow: 0 4px 14px ${color}40;">
+                                    ${initial}
+                                </div>
+                                <div class="person-title-box">
+                                    <h3 title="${escapeHtml(person.name)}">${escapeHtml(person.name)}</h3>
+                                    <span class="person-role-pill">${person.notes ? escapeHtml(person.notes) : 'Ledger Owner'}</span>
+                                </div>
                             </div>
-                            <div class="person-title-box">
-                                <h3>${escapeHtml(person.name)}</h3>
-                                <span>${person.notes ? escapeHtml(person.notes) : 'Ledger Owner'}</span>
+                            <div class="person-card-top-actions">
+                                <button class="action-icon-btn" onclick="openPersonModal('${person.id}')" title="Edit Person" aria-label="Edit ${escapeHtml(person.name)}">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                </button>
+                                <button class="action-icon-btn delete" onclick="deletePerson('${person.id}')" title="Delete Person" aria-label="Delete ${escapeHtml(person.name)}">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
                             </div>
                         </div>
+
                         <div class="person-balance-box">
-                            <span class="label-caps">Current Owned Balance</span>
-                            <div class="person-balance-val font-mono ${person.balance < 0 ? 'text-danger' : ''}">${formatCurrency(person.balance)}</div>
-                            <div class="person-pool-share">${pct}% of total money pool</div>
+                            <div class="person-balance-header">
+                                <span class="label-caps">Current Owned Balance</span>
+                                <span class="person-status-badge ${statusClass}">
+                                    <span class="status-dot"></span>${statusText}
+                                </span>
+                            </div>
+                            <div class="person-balance-val font-mono ${isNegative ? 'text-danger' : (isPositive ? 'text-success-bright' : 'text-muted')}">
+                                ${formatCurrency(person.balance)}
+                            </div>
+                            
+                            <div class="person-pool-progress-wrap">
+                                <div class="person-pool-progress-track">
+                                    <div class="person-pool-progress-bar" style="width: ${Math.min(pct, 100)}%; background: ${color};"></div>
+                                </div>
+                                <div class="person-pool-share-meta">
+                                    <span><strong>${pct}%</strong> of money pool</span>
+                                    <span>${person.balance >= 0 ? 'Positive share' : 'Owed balance'}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="account-card-actions">
-                        <div style="display:flex; gap:6px;">
-                            <button class="btn btn-sm btn-ghost" onclick="openPersonActivityModal('${person.id}')" title="View Full Activity & Statement">📊 Activity</button>
-                            <button class="btn btn-sm btn-outline" onclick="downloadPersonPDF('${person.id}')" title="Download PDF Statement">📄 Statement</button>
-                        </div>
-                        <div style="display:flex; gap:6px;">
-                            <button class="btn btn-sm btn-outline" onclick="openSettleModal('${person.id}')">Settle</button>
-                            <button class="btn btn-sm btn-secondary" onclick="openPersonModal('${person.id}')">Edit</button>
-                            <button class="btn btn-sm btn-ghost text-danger" onclick="deletePerson('${person.id}')">Delete</button>
-                        </div>
+
+                    <div class="person-card-actions">
+                        <button class="btn btn-sm btn-ghost card-action-btn" onclick="openPersonActivityModal('${person.id}')" title="View Full Activity & Statement">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                            <span>Activity</span>
+                        </button>
+                        <button class="btn btn-sm btn-ghost card-action-btn" onclick="downloadPersonPDF('${person.id}')" title="Download PDF Statement">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                            <span>Statement</span>
+                        </button>
+                        <button class="btn btn-sm btn-primary-soft card-action-btn" onclick="openSettleModal('${person.id}')" title="Settle or Transfer Balance">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                            <span>Settle</span>
+                        </button>
                     </div>
                 </div>
             `;
