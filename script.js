@@ -2572,6 +2572,10 @@ function applyTheme(theme) {
     }
 
     html.setAttribute('data-theme', effectiveTheme);
+    const themeColorMeta = document.getElementById('theme-color-meta');
+    if (themeColorMeta) {
+        themeColorMeta.setAttribute('content', effectiveTheme === 'dark' ? '#0f172a' : '#ffffff');
+    }
     try {
         localStorage.setItem('moneyLedger_theme', theme);
     } catch (e) {}

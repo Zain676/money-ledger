@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "build": "echo 'Frontend ready for static deployment'"
+    "build": "echo 'Frontend ready for static deployment'",
+    "icons": "node generate-icons.js"
   },
   "keywords": [
     "personal-finance",
@@ -21,6 +22,7 @@
     "mongodb": "^6.8.0"
   },
   "devDependencies": {
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "sharp": "^0.35.4"
   }
 }
